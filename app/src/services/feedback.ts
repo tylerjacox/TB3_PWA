@@ -2,10 +2,31 @@
 import { appData } from '../state';
 
 let audioCtx: AudioContext | null = null;
+let unlocked = false;
 
 function getAudioCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
   return audioCtx;
+}
+
+// iOS suspends AudioContext until resumed inside a user gesture.
+// Call this once on first tap to unlock audio for the session.
+function unlockAudioCtx() {
+  if (unlocked) return;
+  unlocked = true;
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  // Play a silent buffer to fully unlock on iOS
+  const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start();
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('touchstart', unlockAudioCtx, { once: true });
+  document.addEventListener('click', unlockAudioCtx, { once: true });
 }
 
 function vibrate(pattern: number | number[]) {
@@ -14,42 +35,56 @@ function vibrate(pattern: number | number[]) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
 
-function playTone(freq: number, duration: number, type: OscillatorType = 'sine') {
+type ToneSpec = { freq: number; duration: number; delay: number; type?: OscillatorType };
+
+function playTones(tones: ToneSpec[]) {
   const mode = appData.value.profile.soundMode;
   if (mode !== 'on') return;
   try {
     const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration / 1000);
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    for (const t of tones) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = now + t.delay / 1000;
+      const dur = t.duration / 1000;
+      osc.type = t.type ?? 'sine';
+      osc.frequency.value = t.freq;
+      gain.gain.setValueAtTime(0.15, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur);
+    }
   } catch { /* Audio may not be available */ }
 }
 
 export function feedbackSetComplete() {
   vibrate(50);
-  playTone(660, 60);
-  setTimeout(() => playTone(880, 80), 60);
+  playTones([
+    { freq: 660, duration: 60, delay: 0 },
+    { freq: 880, duration: 80, delay: 60 },
+  ]);
 }
 
 export function feedbackExerciseComplete() {
   vibrate([50, 50, 50]);
-  playTone(784, 100);
-  setTimeout(() => playTone(1047, 150), 100);
-  setTimeout(() => playTone(1319, 200), 250);
+  playTones([
+    { freq: 784, duration: 100, delay: 0 },
+    { freq: 1047, duration: 150, delay: 100 },
+    { freq: 1319, duration: 200, delay: 250 },
+  ]);
 }
 
 export function feedbackRestComplete() {
   vibrate([50, 50, 50, 50, 50]);
-  playTone(523, 100);
-  setTimeout(() => playTone(659, 100), 100);
-  setTimeout(() => playTone(784, 150), 200);
+  playTones([
+    { freq: 523, duration: 100, delay: 0 },
+    { freq: 659, duration: 100, delay: 100 },
+    { freq: 784, duration: 150, delay: 200 },
+  ]);
   speak('Go');
 }
 
@@ -59,14 +94,16 @@ export function feedbackUndo() {
 
 export function feedbackSessionComplete() {
   vibrate([150, 50, 50, 50, 150]);
-  playTone(523, 150);
-  setTimeout(() => playTone(659, 150), 150);
-  setTimeout(() => playTone(784, 200), 300);
+  playTones([
+    { freq: 523, duration: 150, delay: 0 },
+    { freq: 659, duration: 150, delay: 150 },
+    { freq: 784, duration: 200, delay: 300 },
+  ]);
 }
 
 export function feedbackError() {
   vibrate([30, 30, 30]);
-  playTone(220, 100, 'square');
+  playTones([{ freq: 220, duration: 100, delay: 0, type: 'square' }]);
 }
 
 // --- Voice Announcements ---

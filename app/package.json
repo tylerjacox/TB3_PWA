@@ -1,7 +1,7 @@
 {
   "name": "tb3-pwa",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.1.10",
   "type": "module",
   "scripts": {
     "dev": "vite",

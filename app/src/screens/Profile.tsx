@@ -12,6 +12,7 @@ import { signOut, authState } from '../services/auth';
 import { clearAllData } from '../services/storage';
 import { navigate } from '../router';
 import { syncState, performSync } from '../services/sync';
+import { APP_VERSION } from '../version';
 
 export function Profile() {
   const profile = appData.value.profile;
@@ -314,7 +315,7 @@ export function Profile() {
           Data is only accessible to you.
         </p>
         <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 8 }}>
-          <span class="tb3-brand">TB3</span> v1.0.0
+          <span class="tb3-brand">TB3</span> v{APP_VERSION}
         </p>
       </div>
 

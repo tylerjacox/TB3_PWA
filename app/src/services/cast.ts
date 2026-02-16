@@ -21,6 +21,8 @@ const CAST_NAMESPACE = 'urn:x-cast:com.tb3.workout';
 
 let sdkLoaded = false;
 let sdkLoading = false;
+let requesting = false;
+let sendDebounce: ReturnType<typeof setTimeout> | null = null;
 
 // --- SDK Injection (lazy, like auth.ts pattern) ---
 
@@ -72,8 +74,10 @@ function onSessionStateChanged(event: any) {
     const session = cast.framework.CastContext.getInstance().getCurrentSession();
     const name = session?.getSessionObj().receiver.friendlyName ?? null;
     castState.value = { available: true, connected: true, loading: false, deviceName: name };
-    // Send current state immediately on connect
+    // Send current state immediately, with retry to handle session readiness race
     sendState();
+    setTimeout(sendState, 500);
+    setTimeout(sendState, 1500);
   } else if (state === SESSION_ENDED || state === SESSION_START_FAILED) {
     castState.value = { ...castState.value, connected: false, loading: false, deviceName: null };
   }
@@ -89,10 +93,9 @@ function buildMessage(session: ActiveSessionState, profile: UserProfile): string
   const nextSet = exSets.find((s) => !s.completed);
   const displayWeight = weightOverrides[currentExerciseIndex] ?? currentEx.targetWeight;
 
-  // Build plate breakdown string
-  const plateParts = currentEx.plateBreakdown
-    .filter((p) => p.count > 0)
-    .map((p) => `${p.weight}${p.count > 1 ? `x${p.count}` : ''}`);
+  // Plate data for barbell visual
+  const plates = currentEx.plateBreakdown.filter((p) => p.count > 0);
+  const isBodyweight = currentEx.liftName === 'Weighted Pull-up';
 
   // Exercises summary
   const exercisesSummary = exercises.map((ex, i) => {
@@ -105,7 +108,8 @@ function buildMessage(session: ActiveSessionState, profile: UserProfile): string
     exerciseName: currentEx.liftName,
     weight: displayWeight,
     unit: profile.unit,
-    plateBreakdown: plateParts.join(' + '),
+    plates,
+    isBodyweight,
     currentSetNumber: completedSets + 1,
     totalSets: exSets.length,
     completedSets,
@@ -136,16 +140,20 @@ function sendState(): void {
   const session = data.activeSession;
 
   const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-  if (!castSession) return;
+  if (!castSession) {
+    console.warn('[Cast] no active cast session');
+    return;
+  }
 
   if (!session) {
-    // Send idle message
-    castSession.sendMessage(CAST_NAMESPACE, JSON.stringify({ idle: true })).catch(() => {});
+    castSession.sendMessage(CAST_NAMESPACE, JSON.stringify({ idle: true }))
+      .catch((e: unknown) => console.error('[Cast] idle msg failed:', e));
     return;
   }
 
   const message = buildMessage(session, data.profile);
-  castSession.sendMessage(CAST_NAMESPACE, message).catch(() => {});
+  castSession.sendMessage(CAST_NAMESPACE, message)
+    .catch((e: unknown) => console.error('[Cast] send failed:', e));
 }
 
 // --- Reactive Sync ---
@@ -158,7 +166,12 @@ export function initCastSync(): void {
 
     if (!cs.connected || !data.activeSession) return;
 
-    sendState();
+    // Debounce rapid signal changes to avoid flooding Cast messages
+    if (sendDebounce) clearTimeout(sendDebounce);
+    sendDebounce = setTimeout(() => {
+      sendDebounce = null;
+      sendState();
+    }, 300);
   });
 }
 
@@ -166,7 +179,14 @@ export function initCastSync(): void {
 
 export function requestCast(): void {
   if (!sdkLoaded) return;
-  cast.framework.CastContext.getInstance().requestSession().catch(() => {});
+  if (requesting) return;
+  requesting = true;
+  cast.framework.CastContext.getInstance().requestSession()
+    .then(() => { requesting = false; })
+    .catch((e: unknown) => {
+      console.error('[Cast] requestSession failed:', e);
+      requesting = false;
+    });
 }
 
 export function stopCast(): void {

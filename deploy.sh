@@ -65,6 +65,11 @@ if [ -f app/cast-receiver/index.html ]; then
     --cache-control "max-age=0,must-revalidate" \
     --content-type "text/html"
 fi
+if [ -f app/cast-receiver/receiver.js ]; then
+  aws s3 cp app/cast-receiver/receiver.js "s3://$BUCKET/cast-receiver/receiver.js" \
+    --cache-control "max-age=0,must-revalidate" \
+    --content-type "application/javascript"
+fi
 
 # Upload non-cacheable files (always revalidate)
 aws s3 cp app/dist/index.html "s3://$BUCKET/index.html" \
@@ -82,7 +87,7 @@ fi
 echo "Invalidating CloudFront..."
 aws cloudfront create-invalidation \
   --distribution-id "$DIST_ID" \
-  --paths "/index.html" "/sw.js" "/manifest.webmanifest" "/cast-receiver/index.html"
+  --paths "/index.html" "/sw.js" "/manifest.webmanifest" "/cast-receiver/index.html" "/cast-receiver/receiver.js"
 
 echo ""
 echo "Deploy complete!"

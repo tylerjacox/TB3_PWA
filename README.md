@@ -30,7 +30,7 @@ Track your strength gains over time with per-lift line graphs. Filter by Day, We
 - **Data Export/Import** — JSON export via Web Share API with 12-step validated import
 - **Cloud Sync** — Cross-device sync via Cognito authentication with automatic token refresh, Google OAuth2 PKCE support
 - **Offline-First** — Service worker with precaching and auto-update, works without network
-- **Chromecast Support** — Cast your active workout to a TV via Google Cast, showing exercise, weight, sets, rest timer (Android/desktop Chrome)
+- **Chromecast Support** — Cast your active workout to a TV via Google Cast, showing exercise, weight, color-coded barbell plate diagram, sets, rest timer, and exercise progress (Android/desktop Chrome)
 - **iOS Optimized** — Safe area insets, Dynamic Type support, haptic feedback, standalone display
 
 ## Tech Stack
@@ -84,7 +84,7 @@ TB3_PWA/
 │   │   │   ├── sync.ts           # Cloud sync with push/pull
 │   │   │   ├── validation.ts     # Data validation + import safety
 │   │   │   ├── exportImport.ts   # JSON export/import
-│   │   │   ├── feedback.ts       # Haptics + audio feedback
+│   │   │   ├── feedback.ts       # Haptics + audio feedback (iOS AudioContext unlock)
 │   │   │   └── ...
 │   │   ├── templates/            # Training program definitions
 │   │   │   ├── definitions.ts    # All 7 template data objects
@@ -93,10 +93,12 @@ TB3_PWA/
 │   │   ├── cast.d.ts             # Google Cast SDK type declarations
 │   │   ├── types.ts              # TypeScript interfaces
 │   │   ├── state.ts              # Global signal state
+│   │   ├── version.ts            # Build-time version from package.json
 │   │   ├── router.ts             # Hash-based router
 │   │   └── style.css             # Design system
 │   ├── cast-receiver/
-│   │   └── index.html            # Chromecast custom receiver (standalone, no build)
+│   │   ├── index.html            # Chromecast custom receiver (standalone, no build)
+│   │   └── receiver.js           # Receiver logic (external for CSP compliance)
 │   ├── index.html
 │   ├── vite.config.ts
 │   └── package.json
@@ -166,8 +168,9 @@ The deploy script automatically:
 3. Builds the Vite app with TypeScript checks
 4. Syncs hashed assets to S3 with immutable cache headers
 5. Uploads `index.html`, `sw.js`, `manifest.webmanifest` with `must-revalidate`
-6. Invalidates CloudFront for non-cached files
-7. Prints the live site URL
+6. Uploads Cast receiver files (`cast-receiver/index.html`, `receiver.js`) with `must-revalidate`
+7. Invalidates CloudFront for non-cached files
+8. Prints the live site URL
 
 ### 4. Local development
 

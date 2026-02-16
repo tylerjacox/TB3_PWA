@@ -31,7 +31,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    padding: 5%;
+    padding: 3% 5%;
   }
 
   /* --- Header --- */
@@ -39,7 +39,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
     flex-shrink: 0;
   }
 
@@ -58,12 +58,13 @@
   /* --- Main Content --- */
   .main {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    gap: 24px;
+    gap: 16px;
   }
 
   .exercise-name {
@@ -75,7 +76,7 @@
   }
 
   .weight {
-    font-size: 120px;
+    font-size: 100px;
     font-weight: 700;
     letter-spacing: -3px;
     line-height: 1;
@@ -88,10 +89,77 @@
     margin-left: 8px;
   }
 
-  .plates {
-    font-size: 28px;
-    color: var(--muted);
+  /* --- Barbell Diagram --- */
+  .barbell-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .barbell-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+  }
+
+  .barbell-plates {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .barbell-plate {
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .barbell-collar {
+    width: 10px;
+    height: 22px;
+    background: #666;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .barbell-bar {
+    width: 80px;
+    height: 10px;
+    background: #888;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .plate-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .plate-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 22px;
     font-family: 'SF Mono', ui-monospace, monospace;
+    color: var(--text);
+  }
+
+  .plate-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .plate-per-side {
+    font-size: 20px;
+    color: var(--muted);
   }
 
   .reps {
@@ -141,7 +209,7 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 4px;
   }
 
   .rest-timer.active {
@@ -157,7 +225,7 @@
   }
 
   .rest-time {
-    font-size: 96px;
+    font-size: 80px;
     font-weight: 700;
     font-family: 'SF Mono', ui-monospace, monospace;
     letter-spacing: -2px;
@@ -170,7 +238,7 @@
     gap: 12px;
     justify-content: center;
     flex-shrink: 0;
-    padding-top: 24px;
+    padding-top: 12px;
   }
 
   .ex-pip {
@@ -260,7 +328,7 @@
       <div class="weight">
         <span id="weightValue"></span><span class="unit" id="weightUnit"></span>
       </div>
-      <div class="plates" id="plates"></div>
+      <div id="plateDiagram"></div>
     </div>
 
     <div class="set-dots" id="setDots"></div>
@@ -277,130 +345,6 @@
 
 <!-- Cast Receiver SDK -->
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-<script>
-(function() {
-  'use strict';
-
-  var NAMESPACE = 'urn:x-cast:com.tb3.workout';
-  var restInterval = null;
-  var clockOffset = 0; // sender time - local time
-
-  // --- Start Receiver ---
-  var context = cast.framework.CastReceiverContext.getInstance();
-
-  context.addCustomMessageListener(NAMESPACE, function(event) {
-    try {
-      var data = JSON.parse(event.data);
-      if (data.idle) {
-        showIdle();
-      } else {
-        renderWorkout(data);
-      }
-    } catch (e) {
-      console.error('Cast message parse error:', e);
-    }
-  });
-
-  context.start();
-
-  // --- Render ---
-  function showIdle() {
-    document.getElementById('idle').classList.remove('hidden');
-    document.getElementById('workout').classList.add('hidden');
-    stopRestTimer();
-  }
-
-  function renderWorkout(d) {
-    document.getElementById('idle').classList.add('hidden');
-    document.getElementById('workout').classList.remove('hidden');
-
-    // Header
-    document.getElementById('weekSession').textContent =
-      'Week ' + d.week + ' \u2014 Session ' + d.session;
-    document.getElementById('templateName').textContent =
-      d.templateId.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-
-    // Exercise
-    document.getElementById('exerciseName').textContent = d.exerciseName;
-    document.getElementById('weightValue').textContent = d.weight;
-    document.getElementById('weightUnit').textContent = d.unit;
-    document.getElementById('plates').textContent = d.plateBreakdown || '';
-
-    // Reps
-    var allDone = d.completedSets >= d.totalSets;
-    document.getElementById('reps').textContent = allDone
-      ? 'All sets complete'
-      : '\u00D7 ' + d.targetReps + ' reps';
-
-    // Set dots
-    var dotsHtml = '';
-    for (var i = 0; i < d.totalSets; i++) {
-      var cls = 'set-dot';
-      if (i < d.completedSets) cls += ' completed';
-      else if (i === d.completedSets) cls += ' current';
-      dotsHtml += '<div class="' + cls + '"></div>';
-    }
-    document.getElementById('setDots').innerHTML = dotsHtml;
-
-    // Exercise progress
-    var progHtml = '';
-    for (var j = 0; j < d.exercises.length; j++) {
-      var ex = d.exercises[j];
-      var pct = ex.totalSets > 0 ? Math.round((ex.completedSets / ex.totalSets) * 100) : 0;
-      var pipCls = 'ex-pip';
-      if (j === d.currentExerciseIndex) pipCls += ' current';
-      if (pct === 100) pipCls += ' done';
-      progHtml += '<div class="' + pipCls + '">' +
-        '<div class="ex-pip-name">' + escapeHtml(ex.name) + '</div>' +
-        '<div class="ex-pip-bar"><div class="ex-pip-fill" style="width:' + pct + '%"></div></div>' +
-        '</div>';
-    }
-    document.getElementById('exerciseProgress').innerHTML = progHtml;
-
-    // Rest timer
-    if (d.restTimer && d.restTimer.running && d.restTimer.targetEndTime) {
-      clockOffset = d.restTimer.serverTimeNow - Date.now();
-      startRestTimer(d.restTimer.targetEndTime);
-    } else {
-      stopRestTimer();
-    }
-  }
-
-  function startRestTimer(targetEndTime) {
-    stopRestTimer();
-    var el = document.getElementById('restTimer');
-    var timeEl = document.getElementById('restTime');
-    el.classList.add('active');
-
-    function tick() {
-      var now = Date.now() + clockOffset;
-      var remaining = Math.max(0, targetEndTime - now);
-      var mins = Math.floor(remaining / 60000);
-      var secs = Math.floor((remaining % 60000) / 1000);
-      timeEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-      if (remaining <= 0) {
-        stopRestTimer();
-      }
-    }
-
-    tick();
-    restInterval = setInterval(tick, 250);
-  }
-
-  function stopRestTimer() {
-    if (restInterval) {
-      clearInterval(restInterval);
-      restInterval = null;
-    }
-    document.getElementById('restTimer').classList.remove('active');
-  }
-
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-})();
-</script>
+<script src="receiver.js"></script>
 </body>
 </html>

@@ -4,13 +4,14 @@ import { validateImportData } from './validation';
 import { migrateData } from './migrations';
 import type { AppData } from '../types';
 import { CURRENT_SCHEMA_VERSION, createDefaultAppData } from '../types';
+import { APP_VERSION } from '../version';
 
 export function exportAppData(): string {
   const data = appData.value;
   const exportObj = {
     tb3_export: true,
     exportedAt: new Date().toISOString(),
-    appVersion: '1.0.0',
+    appVersion: APP_VERSION,
     schemaVersion: data.schemaVersion,
     profile: data.profile,
     activeProgram: data.activeProgram,
