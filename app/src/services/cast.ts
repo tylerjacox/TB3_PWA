@@ -86,7 +86,7 @@ function onSessionStateChanged(event: any) {
 // --- Message Building ---
 
 function buildMessage(session: ActiveSessionState, profile: UserProfile): string {
-  const { exercises, sets, currentExerciseIndex, weightOverrides, restTimerState } = session;
+  const { exercises, sets, currentExerciseIndex, weightOverrides, timerState } = session;
   const currentEx = exercises[currentExerciseIndex];
   const exSets = sets.filter((s) => s.exerciseIndex === currentExerciseIndex);
   const completedSets = exSets.filter((s) => s.completed).length;
@@ -116,13 +116,14 @@ function buildMessage(session: ActiveSessionState, profile: UserProfile): string
     targetReps: nextSet
       ? nextSet.targetReps
       : (exSets[exSets.length - 1]?.targetReps ?? 0),
-    restTimer: restTimerState?.running
+    timer: timerState
       ? {
-          running: true,
-          targetEndTime: restTimerState.targetEndTime,
+          phase: timerState.phase,
+          startedAt: timerState.startedAt,
+          restDurationSeconds: timerState.restDurationSeconds,
           serverTimeNow: Date.now(),
         }
-      : { running: false, targetEndTime: null, serverTimeNow: Date.now() },
+      : { phase: null, serverTimeNow: Date.now() },
     exercises: exercisesSummary,
     currentExerciseIndex,
     week: session.programWeek,

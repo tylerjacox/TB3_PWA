@@ -2,7 +2,7 @@
   'use strict';
 
   var NAMESPACE = 'urn:x-cast:com.tb3.workout';
-  var restInterval = null;
+  var timerInterval = null;
   var clockOffset = 0; // sender time - local time
   var sessionStartedAt = null; // ISO string from sender
 
@@ -86,7 +86,7 @@
     document.getElementById('idle').classList.remove('hidden');
     document.getElementById('workout').classList.add('hidden');
     sessionStartedAt = null;
-    stopRestTimer();
+    stopTimer();
   }
 
   function renderWorkout(d) {
@@ -141,12 +141,12 @@
     }
     document.getElementById('exerciseProgress').innerHTML = progHtml;
 
-    // Rest timer
-    if (d.restTimer && d.restTimer.running && d.restTimer.targetEndTime) {
-      clockOffset = d.restTimer.serverTimeNow - Date.now();
-      startRestTimer(d.restTimer.targetEndTime);
+    // Two-phase timer
+    if (d.timer && d.timer.phase) {
+      clockOffset = d.timer.serverTimeNow - Date.now();
+      updateTimer(d.timer);
     } else {
-      stopRestTimer();
+      stopTimer();
     }
   }
 
@@ -236,33 +236,77 @@
     return '<div class="barbell-plate" style="height:' + h + 'px;width:' + w + 'px;background:' + color + '"></div>';
   }
 
-  function startRestTimer(targetEndTime) {
-    stopRestTimer();
-    var el = document.getElementById('restTimer');
-    var timeEl = document.getElementById('restTime');
-    el.classList.add('active');
-
-    function tick() {
-      var now = Date.now() + clockOffset;
-      var remaining = Math.max(0, targetEndTime - now);
-      var mins = Math.floor(remaining / 60000);
-      var secs = Math.floor((remaining % 60000) / 1000);
-      timeEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-      if (remaining <= 0) {
-        stopRestTimer();
-      }
-    }
-
-    tick();
-    restInterval = setInterval(tick, 250);
+  function formatTimerMs(ms) {
+    var totalSecs = Math.floor(ms / 1000);
+    var mins = Math.floor(totalSecs / 60);
+    var secs = totalSecs % 60;
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
   }
 
-  function stopRestTimer() {
-    if (restInterval) {
-      clearInterval(restInterval);
-      restInterval = null;
+  function updateTimer(timer) {
+    stopTimer();
+
+    var el = document.getElementById('restTimer');
+    var timeEl = document.getElementById('restTime');
+    var labelEl = document.getElementById('timerLabel');
+    var targetEl = document.getElementById('timerTarget');
+
+    el.classList.add('active');
+    el.classList.remove('overtime', 'exercise-phase');
+
+    if (timer.phase === 'rest') {
+      labelEl.textContent = 'Rest';
+      var restMs = (timer.restDurationSeconds || 0) * 1000;
+
+      // Show set time reference
+      if (timer.restDurationSeconds && targetEl) {
+        targetEl.textContent = 'Set Time: ' + formatTimerMs(restMs);
+        targetEl.style.display = '';
+      } else if (targetEl) {
+        targetEl.style.display = 'none';
+      }
+
+      function tickRest() {
+        var now = Date.now() + clockOffset;
+        var elapsed = Math.max(0, now - timer.startedAt);
+        var isOvertime = restMs > 0 && elapsed >= restMs;
+
+        timeEl.textContent = formatTimerMs(elapsed);
+
+        if (isOvertime) {
+          el.classList.add('overtime');
+        } else {
+          el.classList.remove('overtime');
+        }
+      }
+
+      tickRest();
+      timerInterval = setInterval(tickRest, 250);
+
+    } else if (timer.phase === 'exercise') {
+      labelEl.textContent = 'Exercise Time';
+      el.classList.add('exercise-phase');
+
+      if (targetEl) targetEl.style.display = 'none';
+
+      function tickExercise() {
+        var now = Date.now() + clockOffset;
+        var elapsed = Math.max(0, now - timer.startedAt);
+        timeEl.textContent = formatTimerMs(elapsed);
+      }
+
+      tickExercise();
+      timerInterval = setInterval(tickExercise, 250);
     }
-    document.getElementById('restTimer').classList.remove('active');
+  }
+
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    var el = document.getElementById('restTimer');
+    el.classList.remove('active', 'overtime', 'exercise-phase');
   }
 
   function escapeHtml(str) {

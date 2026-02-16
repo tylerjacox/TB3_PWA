@@ -119,9 +119,10 @@ export interface ActiveSessionState {
   setsRange?: [number, number];
   weightOverrides: Record<number, number>;
   exerciseStartTimes: Record<number, string>;
-  restTimerState: {
-    running: boolean;
-    targetEndTime: number | null;
+  timerState: {
+    phase: 'rest' | 'exercise';
+    startedAt: number;
+    restDurationSeconds: number | null;
   } | null;
 }
 

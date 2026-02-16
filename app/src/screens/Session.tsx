@@ -108,7 +108,7 @@ function PreSessionSetup() {
       ...(hasSetRange ? { setsRange: currentWeek!.setsRange } : {}),
       weightOverrides: {},
       exerciseStartTimes: { 0: now },
-      restTimerState: null,
+      timerState: null,
     };
 
     updateAppData((d) => ({ ...d, activeSession: session }));
@@ -164,43 +164,79 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
     && completedSetsForEx >= session.setsRange[0]
     && !allExSetsComplete;
 
-  // Rest timer state
-  const [restRemaining, setRestRemaining] = useState<number | null>(null);
+  // Two-phase timer state (rest count-up / exercise count-up)
+  const [timerDisplay, setTimerDisplay] = useState<{
+    phase: 'rest' | 'exercise';
+    elapsed: number;
+    isOvertime: boolean;
+    restDuration: number | null;
+  } | null>(null);
   const lastAnnouncedRef = useRef<number | null>(null);
+  const restCompleteFiredRef = useRef(false);
 
   useEffect(() => {
-    if (!session.restTimerState?.running || !session.restTimerState.targetEndTime) {
-      setRestRemaining(null);
+    if (!session.timerState) {
+      setTimerDisplay(null);
       lastAnnouncedRef.current = null;
+      restCompleteFiredRef.current = false;
       return;
     }
+
+    const { phase, startedAt, restDurationSeconds } = session.timerState;
+
+    // Reset the "Go" fired flag when entering a new rest phase
+    if (phase === 'rest') {
+      restCompleteFiredRef.current = false;
+    }
+
     const interval = setInterval(() => {
-      const remaining = Math.max(0, session.restTimerState!.targetEndTime! - Date.now());
-      setRestRemaining(remaining);
+      const elapsed = Math.max(0, Date.now() - startedAt);
 
-      // Voice milestone announcements
-      if (remaining > 0) {
-        const sec = Math.ceil(remaining / 1000);
-        if (sec !== lastAnnouncedRef.current) {
-          const announced = feedbackVoiceMilestone(remaining);
-          if (announced !== null) lastAnnouncedRef.current = announced;
+      if (phase === 'rest' && restDurationSeconds != null) {
+        const restMs = restDurationSeconds * 1000;
+        const isOvertime = elapsed >= restMs;
+        const remaining = restMs - elapsed;
+
+        // Voice milestone announcements (countdown from set time)
+        if (!isOvertime && remaining > 0) {
+          const sec = Math.ceil(remaining / 1000);
+          if (sec !== lastAnnouncedRef.current) {
+            const announced = feedbackVoiceMilestone(remaining);
+            if (announced !== null) lastAnnouncedRef.current = announced;
+          }
         }
-      }
 
-      if (remaining <= 0) {
-        feedbackRestComplete();
-        updateAppData((d) => ({
-          ...d,
-          activeSession: d.activeSession
-            ? { ...d.activeSession, restTimerState: null }
-            : null,
-        }));
+        // Fire "Go" feedback exactly once when crossing into overtime
+        if (isOvertime && !restCompleteFiredRef.current) {
+          restCompleteFiredRef.current = true;
+          feedbackRestComplete();
+        }
+
+        setTimerDisplay({ phase: 'rest', elapsed, isOvertime, restDuration: restDurationSeconds });
+      } else {
+        // Exercise phase: just count up
+        setTimerDisplay({ phase: 'exercise', elapsed, isOvertime: false, restDuration: null });
       }
     }, 250);
     return () => clearInterval(interval);
-  }, [session.restTimerState?.running, session.restTimerState?.targetEndTime]);
+  }, [session.timerState?.phase, session.timerState?.startedAt]);
 
   function completeSet() {
+    // --- REST PHASE: transition to exercise phase (don't record a set) ---
+    if (session.timerState?.phase === 'rest') {
+      updateAppData((d) => ({
+        ...d,
+        activeSession: d.activeSession
+          ? {
+              ...d.activeSession,
+              timerState: { phase: 'exercise', startedAt: Date.now(), restDurationSeconds: null },
+            }
+          : null,
+      }));
+      return;
+    }
+
+    // --- EXERCISE PHASE or NO TIMER: record the set, start rest ---
     if (!nextSet) return;
     feedbackSetComplete();
 
@@ -210,14 +246,10 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
         : s,
     );
 
-    // Start rest timer
-    const profile = appData.value.profile;
-    const template = getTemplate(session.templateId as any);
-    const shouldShowRest = profile.restTimerDefault > 0;
+    // Start rest timer (count-up with set time reference)
     const restDuration = getRestDuration(appData.value);
-
-    const restTimerState = shouldShowRest
-      ? { running: true, targetEndTime: Date.now() + restDuration * 1000 }
+    const timerState = restDuration > 0
+      ? { phase: 'rest' as const, startedAt: Date.now(), restDurationSeconds: restDuration }
       : null;
 
     // Set undo
@@ -237,7 +269,7 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
     updateAppData((d) => ({
       ...d,
       activeSession: d.activeSession
-        ? { ...d.activeSession, sets: updatedSets, restTimerState }
+        ? { ...d.activeSession, sets: updatedSets, timerState }
         : null,
     }));
 
@@ -253,7 +285,7 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
           }
           return {
             ...d,
-            activeSession: { ...d.activeSession, currentExerciseIndex: nextIndex, restTimerState: null, exerciseStartTimes: startTimes },
+            activeSession: { ...d.activeSession, currentExerciseIndex: nextIndex, timerState: null, exerciseStartTimes: startTimes },
           };
         });
       }, 1500);
@@ -276,7 +308,7 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
     );
     updateAppData((d) => ({
       ...d,
-      activeSession: d.activeSession ? { ...d.activeSession, sets: updatedSets } : null,
+      activeSession: d.activeSession ? { ...d.activeSession, sets: updatedSets, timerState: null } : null,
     }));
     setUndoSet(null);
   }
@@ -295,7 +327,7 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
       updateAppData((d) => ({
         ...d,
         activeSession: d.activeSession
-          ? { ...d.activeSession, sets: updatedSets, restTimerState: null }
+          ? { ...d.activeSession, sets: updatedSets, timerState: null }
           : null,
       }));
       setTimeout(() => completeSession(updatedSets), 300);
@@ -314,7 +346,7 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
             ...d.activeSession,
             sets: updatedSets,
             currentExerciseIndex: nextIndex,
-            restTimerState: null,
+            timerState: null,
             exerciseStartTimes: startTimes,
           },
         };
@@ -415,7 +447,7 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
       }
       return {
         ...d,
-        activeSession: { ...d.activeSession, currentExerciseIndex: index, restTimerState: null, exerciseStartTimes: startTimes },
+        activeSession: { ...d.activeSession, currentExerciseIndex: index, timerState: null, exerciseStartTimes: startTimes },
       };
     });
   }
@@ -423,23 +455,12 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
   function skipRestTimer() {
     updateAppData((d) => ({
       ...d,
-      activeSession: d.activeSession ? { ...d.activeSession, restTimerState: null } : null,
-    }));
-    setRestRemaining(null);
-  }
-
-  function addRestTime() {
-    updateAppData((d) => ({
-      ...d,
-      activeSession: d.activeSession?.restTimerState
+      activeSession: d.activeSession
         ? {
             ...d.activeSession,
-            restTimerState: {
-              ...d.activeSession.restTimerState,
-              targetEndTime: (d.activeSession.restTimerState.targetEndTime || Date.now()) + 30000,
-            },
+            timerState: { phase: 'exercise', startedAt: Date.now(), restDurationSeconds: null },
           }
-        : d.activeSession,
+        : null,
     }));
   }
 
@@ -531,20 +552,31 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
             </button>
           )}
 
-          {/* Rest Timer */}
-          {restRemaining !== null && restRemaining > 0 && (
-            <div class="rest-timer" role="timer" aria-label={`Rest timer, ${Math.ceil(restRemaining / 1000)} seconds`}>
+          {/* Two-Phase Timer */}
+          {timerDisplay && (
+            <div
+              class={`rest-timer${timerDisplay.isOvertime ? ' overtime' : ''}${timerDisplay.phase === 'exercise' ? ' exercise-phase' : ''}`}
+              role="timer"
+              aria-label={`${timerDisplay.phase === 'rest' ? 'Rest' : 'Exercise'} timer, ${Math.floor(timerDisplay.elapsed / 1000)} seconds`}
+            >
+              <div class="rest-timer-label">
+                {timerDisplay.phase === 'rest' ? 'Rest' : 'Exercise Time'}
+              </div>
               <div class="rest-timer-time">
-                {Math.floor(restRemaining / 60000)}:{String(Math.floor((restRemaining % 60000) / 1000)).padStart(2, '0')}
+                {formatTimerDisplay(timerDisplay.elapsed)}
               </div>
-              <div class="rest-timer-controls">
-                <button class="btn btn-secondary" onClick={addRestTime} aria-label="Add 30 seconds to rest timer">
-                  +30s
-                </button>
-                <button class="btn btn-secondary" onClick={skipRestTimer} aria-label="Skip rest timer">
-                  Skip
-                </button>
-              </div>
+              {timerDisplay.phase === 'rest' && timerDisplay.restDuration != null && (
+                <div class="rest-timer-target">
+                  Set Time: {formatTimerDisplay(timerDisplay.restDuration * 1000)}
+                </div>
+              )}
+              {timerDisplay.phase === 'rest' && !timerDisplay.isOvertime && (
+                <div class="rest-timer-controls">
+                  <button class="btn btn-secondary" onClick={skipRestTimer} aria-label="Skip rest timer">
+                    Skip
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -559,15 +591,23 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
           </div>
         )}
         <button
-          class="complete-set-btn"
+          class={`complete-set-btn${session.timerState?.phase === 'rest' ? ' rest-active' : ''}`}
           onClick={completeSet}
-          disabled={!nextSet}
-          aria-label={nextSet
-            ? `Complete set ${nextSet.setNumber} of ${exSets.length}, ${currentEx.liftName} at ${displayWeight} pounds`
-            : 'All sets complete'
+          disabled={!nextSet && session.timerState?.phase !== 'rest'}
+          aria-label={
+            session.timerState?.phase === 'rest'
+              ? `Begin set ${nextSet ? nextSet.setNumber : ''}`
+              : nextSet
+                ? `Complete set ${nextSet.setNumber} of ${exSets.length}, ${currentEx.liftName} at ${displayWeight} pounds`
+                : 'All sets complete'
           }
         >
-          {nextSet ? `Complete Set ${nextSet.setNumber} / ${exSets.length}` : 'All Sets Done'}
+          {session.timerState?.phase === 'rest'
+            ? `Begin Set ${nextSet ? nextSet.setNumber : ''}`
+            : nextSet
+              ? `Complete Set ${nextSet.setNumber} / ${exSets.length}`
+              : 'All Sets Done'
+          }
         </button>
       </div>
 
@@ -607,9 +647,20 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
                 Complete Current Set
               </button>
             )}
-            {restRemaining !== null && (
+            {timerDisplay && timerDisplay.phase === 'rest' && (
               <button class="actions-menu-item" onClick={() => { skipRestTimer(); setShowMenu(false); }}>
-                Skip Rest Timer
+                Skip Rest
+              </button>
+            )}
+            {timerDisplay && timerDisplay.phase === 'exercise' && (
+              <button class="actions-menu-item" onClick={() => {
+                updateAppData((d) => ({
+                  ...d,
+                  activeSession: d.activeSession ? { ...d.activeSession, timerState: null } : null,
+                }));
+                setShowMenu(false);
+              }}>
+                Stop Timer
               </button>
             )}
             <button class="actions-menu-item danger" onClick={() => { setShowMenu(false); setShowEndConfirm(true); }}>
@@ -681,6 +732,13 @@ function StaleSessionPrompt({ session }: { session: ActiveSessionState }) {
       </button>
     </div>
   );
+}
+
+function formatTimerDisplay(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
 function getRestDuration(data: { profile: { restTimerDefault: number }; computedSchedule: any; activeProgram: any }): number {

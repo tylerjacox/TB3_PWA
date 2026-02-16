@@ -300,6 +300,30 @@
     color: var(--accent);
   }
 
+  .timer-target {
+    font-size: 24px;
+    color: var(--muted);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+
+  /* Timer overtime state (rest elapsed > set time) */
+  .rest-timer.overtime .rest-time {
+    color: #FF6B6B;
+  }
+
+  .rest-timer.overtime .rest-label {
+    color: #FF6B6B;
+  }
+
+  /* Exercise phase styling */
+  .rest-timer.exercise-phase .rest-time {
+    color: #4CAF50;
+  }
+
+  .rest-timer.exercise-phase .rest-label {
+    color: #4CAF50;
+  }
+
   /* --- Footer (bottom) --- */
   .footer {
     display: flex;
@@ -441,8 +465,9 @@
       <div class="set-dots" id="setDots"></div>
       <div class="reps" id="reps"></div>
       <div class="rest-timer" id="restTimer">
-        <div class="rest-label">Rest</div>
+        <div class="rest-label" id="timerLabel">Rest</div>
         <div class="rest-time" id="restTime">0:00</div>
+        <div class="timer-target" id="timerTarget" style="display:none"></div>
       </div>
     </div>
   </div>

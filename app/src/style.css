@@ -682,9 +682,52 @@ select:focus-visible {
   transition: stroke-dashoffset 1s linear;
 }
 
+.rest-timer-label {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.rest-timer-target {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: 'SF Mono', monospace;
+}
+
 .rest-timer-controls {
   display: flex;
   gap: 12px;
+}
+
+/* Timer overtime state (rest elapsed > set time) */
+.rest-timer.overtime .rest-timer-time {
+  color: var(--error);
+}
+
+.rest-timer.overtime .rest-timer-label {
+  color: var(--error);
+}
+
+/* Exercise phase styling */
+.rest-timer.exercise-phase .rest-timer-time {
+  color: var(--success);
+}
+
+.rest-timer.exercise-phase .rest-timer-label {
+  color: var(--success);
+}
+
+/* "Begin Set" button variant (during rest phase) */
+.complete-set-btn.rest-active {
+  background: var(--success);
+  color: #000000;
+}
+
+.complete-set-btn.rest-active:active:not(:disabled) {
+  opacity: 0.9;
+  transform: scale(0.98);
 }
 
 /* --- Undo Toast --- */
