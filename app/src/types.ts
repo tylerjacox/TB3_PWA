@@ -118,6 +118,7 @@ export interface ActiveSessionState {
   }[];
   sets: SessionSet[];
   weightOverrides: Record<number, number>;
+  exerciseStartTimes: Record<number, string>;
   restTimerState: {
     running: boolean;
     targetEndTime: number | null;
@@ -148,6 +149,7 @@ export interface SessionLog {
   exercises: ExerciseLog[];
   notes: string;
   durationMinutes?: number;
+  durationSeconds?: number;
   lastModified: string;
 }
 
@@ -160,6 +162,7 @@ export interface ExerciseLog {
     actualReps: number;
     completed: boolean;
   }[];
+  durationSeconds?: number;
 }
 
 export interface OneRepMaxTest {

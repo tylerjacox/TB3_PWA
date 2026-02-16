@@ -98,17 +98,19 @@ function PreSessionSetup() {
       }
     }
 
+    const now = new Date().toISOString();
     const session: ActiveSessionState = {
       status: 'in_progress',
       templateId: activeProgram!.templateId,
       programWeek: activeProgram!.currentWeek,
       programSession: activeProgram!.currentSession,
       sessionType: currentSessionDef!.type,
-      startedAt: new Date().toISOString(),
+      startedAt: now,
       currentExerciseIndex: 0,
       exercises,
       sets,
       weightOverrides: {},
+      exerciseStartTimes: { 0: now },
       restTimerState: null,
     };
 
@@ -255,12 +257,18 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
     // Auto-advance after all sets complete (1.5s delay)
     if (allDone && currentExerciseIndex < exercises.length - 1) {
       setTimeout(() => {
-        updateAppData((d) => ({
-          ...d,
-          activeSession: d.activeSession
-            ? { ...d.activeSession, currentExerciseIndex: d.activeSession.currentExerciseIndex + 1, restTimerState: null }
-            : null,
-        }));
+        updateAppData((d) => {
+          if (!d.activeSession) return d;
+          const nextIndex = d.activeSession.currentExerciseIndex + 1;
+          const startTimes = { ...d.activeSession.exerciseStartTimes };
+          if (!startTimes[nextIndex]) {
+            startTimes[nextIndex] = new Date().toISOString();
+          }
+          return {
+            ...d,
+            activeSession: { ...d.activeSession, currentExerciseIndex: nextIndex, restTimerState: null, exerciseStartTimes: startTimes },
+          };
+        });
       }, 1500);
     }
 
@@ -289,11 +297,23 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
   function completeSession(finalSets?: SessionSet[]) {
     feedbackSessionComplete();
     const useSets = finalSets || sets;
+    const sessionEndTime = new Date();
+    const startTimes = session.exerciseStartTimes || {};
 
-    // Convert to SessionLog
+    // Convert to SessionLog with per-exercise durations
     const exerciseLogs: ExerciseLog[] = exercises.map((ex, ei) => {
       const exSets = useSets.filter((s) => s.exerciseIndex === ei);
       const actualWeight = weightOverrides[ei] ?? ex.targetWeight;
+
+      // Calculate duration: from this exercise's start to the next exercise's start (or session end)
+      let durationSeconds: number | undefined;
+      const exStart = startTimes[ei];
+      if (exStart) {
+        const nextStart = startTimes[ei + 1];
+        const endTime = nextStart ? new Date(nextStart).getTime() : sessionEndTime.getTime();
+        durationSeconds = Math.round((endTime - new Date(exStart).getTime()) / 1000);
+      }
+
       return {
         liftName: ex.liftName,
         targetWeight: ex.targetWeight,
@@ -303,11 +323,13 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
           actualReps: s.actualReps ?? 0,
           completed: s.completed,
         })),
+        durationSeconds,
       };
     });
 
     const anyCompleted = useSets.some((s) => s.completed);
     const allCompleted = useSets.every((s) => s.completed);
+    const totalDurationSeconds = Math.round((sessionEndTime.getTime() - new Date(session.startedAt).getTime()) / 1000);
 
     const log: SessionLog = {
       id: generateId(),
@@ -317,10 +339,11 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
       sessionNumber: session.programSession,
       status: allCompleted ? 'completed' : anyCompleted ? 'partial' : 'skipped',
       startedAt: session.startedAt,
-      completedAt: new Date().toISOString(),
+      completedAt: sessionEndTime.toISOString(),
       exercises: exerciseLogs,
       notes: '',
-      lastModified: new Date().toISOString(),
+      durationSeconds: totalDurationSeconds,
+      lastModified: sessionEndTime.toISOString(),
     };
 
     // Advance program
@@ -355,12 +378,17 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
 
   function goToExercise(index: number) {
     if (index < 0 || index >= exercises.length) return;
-    updateAppData((d) => ({
-      ...d,
-      activeSession: d.activeSession
-        ? { ...d.activeSession, currentExerciseIndex: index, restTimerState: null }
-        : null,
-    }));
+    updateAppData((d) => {
+      if (!d.activeSession) return d;
+      const startTimes = { ...d.activeSession.exerciseStartTimes };
+      if (!startTimes[index]) {
+        startTimes[index] = new Date().toISOString();
+      }
+      return {
+        ...d,
+        activeSession: { ...d.activeSession, currentExerciseIndex: index, restTimerState: null, exerciseStartTimes: startTimes },
+      };
+    });
   }
 
   function skipRestTimer() {

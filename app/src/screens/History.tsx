@@ -5,6 +5,17 @@ import { getTemplate } from '../templates/definitions';
 import { IconChevronDown } from '../components/Icons';
 import { MaxChart } from '../components/MaxChart';
 
+function formatDuration(seconds: number): string {
+  if (seconds >= 3600) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.round((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
+  }
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}m ${s}s`;
+}
+
 export function History() {
   const { sessionHistory, maxTestHistory } = appData.value;
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
@@ -72,11 +83,13 @@ export function History() {
             {sortedSessions.map((session) => {
               const template = getTemplate(session.templateId as any);
               const isExpanded = expandedSession === session.id;
-              const duration = session.startedAt && session.completedAt
-                ? Math.round(
-                    (new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 60000,
-                  )
-                : null;
+              const durationStr = session.durationSeconds != null
+                ? formatDuration(session.durationSeconds)
+                : session.durationMinutes != null
+                  ? `${session.durationMinutes}m`
+                  : session.startedAt && session.completedAt
+                    ? `${Math.round((new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 60000)}m`
+                    : null;
 
               return (
                 <div key={session.id} class="history-item" role="listitem">
@@ -95,9 +108,9 @@ export function History() {
                           <span class={`status-badge status-${session.status}`}>
                             {session.status}
                           </span>
-                          {duration !== null && (
+                          {durationStr !== null && (
                             <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                              {duration} min
+                              {durationStr}
                             </span>
                           )}
                         </div>
@@ -113,6 +126,7 @@ export function History() {
                           <span style={{ fontWeight: 600 }}>{ex.liftName}</span>
                           <span style={{ color: 'var(--muted)' }}>
                             {' '}— {ex.actualWeight} lb, {ex.sets.filter((s) => s.completed).length}/{ex.sets.length} sets
+                            {ex.durationSeconds != null && `, ${formatDuration(ex.durationSeconds)}`}
                           </span>
                         </div>
                       ))}
