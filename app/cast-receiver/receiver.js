@@ -20,6 +20,10 @@
 
   var MAX_PLATE_H = 72; // max plate height in px for TV
 
+  // Belt plate dimensions (scaled up for TV)
+  var BELT_PLATE_W = { 45: 60, 35: 54, 25: 48, 10: 40, 5: 34, 2.5: 28, 1.25: 24 };
+  var BELT_PLATE_H = { 45: 14, 35: 13, 25: 12, 10: 10, 5: 8, 2.5: 6, 1.25: 5 };
+
   // --- Clock ---
   function formatTime(date) {
     var h = date.getHours();
@@ -146,7 +150,7 @@
     }
   }
 
-  // --- Barbell / Plate Diagram ---
+  // --- Barbell / Belt / Plate Diagram ---
   function renderPlates(plates, isBodyweight) {
     var el = document.getElementById('plateDiagram');
     if (!plates || plates.length === 0) {
@@ -165,28 +169,41 @@
     var label = isBodyweight ? 'on belt' : 'per side';
     var html = '<div class="barbell-diagram">';
 
-    // Barbell visual
-    html += '<div class="barbell-visual">';
+    if (isBodyweight) {
+      // Belt visual: chain → plates stacked vertically → pin
+      html += '<div class="belt-visual">';
+      html += '<div class="belt-chain"></div>';
+      html += '<div class="belt-plates">';
+      for (var b = 0; b < expanded.length; b++) {
+        html += beltPlateDiv(expanded[b]);
+      }
+      html += '</div>';
+      html += '<div class="belt-pin"></div>';
+      html += '</div>';
+    } else {
+      // Barbell visual
+      html += '<div class="barbell-visual">';
 
-    // Left plates (reversed — heaviest near collar)
-    html += '<div class="barbell-plates">';
-    for (var k = expanded.length - 1; k >= 0; k--) {
-      html += plateDiv(expanded[k]);
+      // Left plates (reversed — heaviest near collar)
+      html += '<div class="barbell-plates">';
+      for (var k = expanded.length - 1; k >= 0; k--) {
+        html += plateDiv(expanded[k]);
+      }
+      html += '</div>';
+
+      // Collar + bar + collar
+      html += '<div class="barbell-collar"></div>';
+      html += '<div class="barbell-bar"></div>';
+      html += '<div class="barbell-collar"></div>';
+
+      // Right plates
+      html += '<div class="barbell-plates">';
+      for (var m = 0; m < expanded.length; m++) {
+        html += plateDiv(expanded[m]);
+      }
+      html += '</div>';
+      html += '</div>';
     }
-    html += '</div>';
-
-    // Collar + bar + collar
-    html += '<div class="barbell-collar"></div>';
-    html += '<div class="barbell-bar"></div>';
-    html += '<div class="barbell-collar"></div>';
-
-    // Right plates
-    html += '<div class="barbell-plates">';
-    for (var m = 0; m < expanded.length; m++) {
-      html += plateDiv(expanded[m]);
-    }
-    html += '</div>';
-    html += '</div>';
 
     // Summary legend
     html += '<div class="plate-summary">';
@@ -203,6 +220,13 @@
 
     html += '</div>';
     el.innerHTML = html;
+  }
+
+  function beltPlateDiv(weight) {
+    var w = BELT_PLATE_W[weight] || 36;
+    var h = BELT_PLATE_H[weight] || 8;
+    var color = PLATE_COLORS[weight] || '#888';
+    return '<div class="belt-plate" style="width:' + w + 'px;height:' + h + 'px;background:' + color + '"></div>';
   }
 
   function plateDiv(weight) {

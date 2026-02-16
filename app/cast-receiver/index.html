@@ -190,6 +190,44 @@
     color: var(--muted);
   }
 
+  /* --- Belt Diagram (Weighted Pull-ups) --- */
+  .belt-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 0;
+  }
+
+  .belt-chain {
+    width: 3px;
+    height: 16px;
+    background: repeating-linear-gradient(
+      to bottom,
+      #888 0px, #888 3px,
+      transparent 3px, transparent 5px
+    );
+  }
+
+  .belt-plates {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .belt-plate {
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .belt-pin {
+    width: 3px;
+    height: 10px;
+    background: #888;
+    border-radius: 0 0 2px 2px;
+  }
+
   /* --- Right Column: Reps --- */
   .reps {
     font-size: 48px;
