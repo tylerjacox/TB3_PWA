@@ -30,6 +30,7 @@ Track your strength gains over time with per-lift line graphs. Filter by Day, We
 - **Data Export/Import** — JSON export via Web Share API with 12-step validated import
 - **Cloud Sync** — Optional cross-device sync via Cognito authentication
 - **Offline-First** — Service worker with precaching, works without network
+- **Chromecast Support** — Cast your active workout to a TV via Google Cast, showing exercise, weight, sets, rest timer (Android/desktop Chrome)
 - **iOS Optimized** — Safe area insets, Dynamic Type support, haptic feedback, standalone display
 
 ## Tech Stack
@@ -57,6 +58,7 @@ TB3_PWA/
 │   │   │   └── plates.ts         # Greedy plate loading for barbell and belt
 │   │   ├── components/           # Reusable UI components
 │   │   │   ├── session/          # Workout session components
+│   │   │   ├── CastButton.tsx    # Chromecast cast-to-TV button
 │   │   │   ├── ConfirmDialog.tsx  # Modal with focus trap
 │   │   │   ├── Icons.tsx         # Inline SVG icon set
 │   │   │   ├── Layout.tsx        # Safe area + scroll wrapper
@@ -77,6 +79,7 @@ TB3_PWA/
 │   │   │   └── Session.tsx       # Active workout tracker
 │   │   ├── services/             # Business logic
 │   │   │   ├── auth.ts           # Cognito authentication (SRP)
+│   │   │   ├── cast.ts           # Google Cast sender (lazy SDK, state sync)
 │   │   │   ├── storage.ts        # IndexedDB persistence
 │   │   │   ├── sync.ts           # Cloud sync with push/pull
 │   │   │   ├── validation.ts     # Data validation + import safety
@@ -87,10 +90,13 @@ TB3_PWA/
 │   │   │   ├── definitions.ts    # All 7 template data objects
 │   │   │   └── schedule.ts       # Schedule generator
 │   │   ├── app.tsx               # Root component + router
+│   │   ├── cast.d.ts             # Google Cast SDK type declarations
 │   │   ├── types.ts              # TypeScript interfaces
 │   │   ├── state.ts              # Global signal state
 │   │   ├── router.ts             # Hash-based router
 │   │   └── style.css             # Design system
+│   ├── cast-receiver/
+│   │   └── index.html            # Chromecast custom receiver (standalone, no build)
 │   ├── index.html
 │   ├── vite.config.ts
 │   └── package.json
@@ -188,7 +194,7 @@ These are injected at build time by Vite. For production deploys, `deploy.sh` ge
 
 | Template | Days/Week | Duration | Description |
 |---|---|---|---|
-| **Operator** | 6 (3 strength + 3 endurance) | 6 weeks | Standard strength + conditioning split |
+| **Operator** | 3 | 6 weeks | Standard strength template with fixed lifts |
 | **Zulu** | 4 | 6 weeks | A/B cluster split with different percentages per cluster |
 | **Fighter** | 2 | 6 weeks | Minimal strength — 2-3 lifts, compatible with high skill work |
 | **Gladiator** | 3 | 6 weeks | All cluster lifts every session, week 6 descending sets |
