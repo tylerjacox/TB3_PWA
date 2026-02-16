@@ -31,6 +31,15 @@ Track your strength gains over time with per-lift line graphs. Filter by Day, We
 - **Cloud Sync** — Cross-device sync via Cognito authentication with automatic token refresh, Google OAuth2 PKCE support
 - **Offline-First** — Service worker with precaching and auto-update, works without network
 - **Chromecast Support** — Cast your active workout to a TV via Google Cast with two-column layout showing exercise, weight, color-coded barbell plate diagram, sets, rest timer, session elapsed time, current clock, and exercise progress (Android/desktop Chrome)
+
+### Chromecast Display
+
+Cast your workout to any TV with a two-column layout optimized for 16:9 screens. Left side shows exercise, weight, and plate diagram; right side shows set progress, reps, and rest timer. Clock and session elapsed time update in real time.
+
+<p align="center">
+  <img src="docs/cast-screen.png" alt="Chromecast workout display with two-column layout" width="720">
+</p>
+
 - **iOS Optimized** — Safe area insets, Dynamic Type support, haptic feedback, standalone display
 
 ## Tech Stack
