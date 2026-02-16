@@ -690,12 +690,6 @@ select:focus-visible {
   color: var(--muted);
 }
 
-.rest-timer-target {
-  font-size: 13px;
-  color: var(--muted);
-  font-family: 'SF Mono', monospace;
-}
-
 .rest-timer-controls {
   display: flex;
   gap: 12px;
@@ -1518,7 +1512,7 @@ select:focus-visible {
   border-top-right-radius: 16px;
   padding: 8px 0;
   padding-bottom: calc(8px + var(--sab));
-  z-index: 150;
+  z-index: 210;
 }
 
 .actions-menu-item {

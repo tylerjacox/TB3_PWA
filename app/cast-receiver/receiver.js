@@ -249,7 +249,6 @@
     var el = document.getElementById('restTimer');
     var timeEl = document.getElementById('restTime');
     var labelEl = document.getElementById('timerLabel');
-    var targetEl = document.getElementById('timerTarget');
 
     el.classList.add('active');
     el.classList.remove('overtime', 'exercise-phase');
@@ -257,14 +256,6 @@
     if (timer.phase === 'rest') {
       labelEl.textContent = 'Rest';
       var restMs = (timer.restDurationSeconds || 0) * 1000;
-
-      // Show set time reference
-      if (timer.restDurationSeconds && targetEl) {
-        targetEl.textContent = 'Set Time: ' + formatTimerMs(restMs);
-        targetEl.style.display = '';
-      } else if (targetEl) {
-        targetEl.style.display = 'none';
-      }
 
       function tickRest() {
         var now = Date.now() + clockOffset;
@@ -286,8 +277,6 @@
     } else if (timer.phase === 'exercise') {
       labelEl.textContent = 'Exercise Time';
       el.classList.add('exercise-phase');
-
-      if (targetEl) targetEl.style.display = 'none';
 
       function tickExercise() {
         var now = Date.now() + clockOffset;

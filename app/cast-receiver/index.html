@@ -83,16 +83,37 @@
     min-width: 0;
   }
 
-  /* Right column: sets + reps + rest timer */
+  /* Right column: sets + reps + rest timer — absolutely positioned */
   .col-right {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    position: relative;
     text-align: center;
-    gap: 20px;
     min-width: 0;
+  }
+
+  /* Each slot is absolutely positioned so siblings can't shift each other */
+  .slot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slot-dots {
+    top: 28%;
+    transform: translateY(-50%);
+  }
+
+  .slot-reps {
+    top: 48%;
+    transform: translateY(-50%);
+  }
+
+  .slot-timer {
+    top: 72%;
+    transform: translateY(-50%);
   }
 
   .exercise-name {
@@ -272,16 +293,18 @@
     box-shadow: 0 0 0 4px rgba(255, 149, 0, 0.3);
   }
 
-  /* --- Rest Timer --- */
+  /* --- Rest Timer (always reserves space, visibility toggles) --- */
   .rest-timer {
-    display: none;
+    display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    visibility: hidden;
+    min-height: 140px;
   }
 
   .rest-timer.active {
-    display: flex;
+    visibility: visible;
   }
 
   .rest-label {
@@ -298,12 +321,6 @@
     font-family: 'SF Mono', ui-monospace, monospace;
     letter-spacing: -2px;
     color: var(--accent);
-  }
-
-  .timer-target {
-    font-size: 24px;
-    color: var(--muted);
-    font-family: 'SF Mono', ui-monospace, monospace;
   }
 
   /* Timer overtime state (rest elapsed > set time) */
@@ -462,12 +479,17 @@
     </div>
 
     <div class="col-right">
-      <div class="set-dots" id="setDots"></div>
-      <div class="reps" id="reps"></div>
-      <div class="rest-timer" id="restTimer">
-        <div class="rest-label" id="timerLabel">Rest</div>
-        <div class="rest-time" id="restTime">0:00</div>
-        <div class="timer-target" id="timerTarget" style="display:none"></div>
+      <div class="slot slot-dots">
+        <div class="set-dots" id="setDots"></div>
+      </div>
+      <div class="slot slot-reps">
+        <div class="reps" id="reps"></div>
+      </div>
+      <div class="slot slot-timer">
+        <div class="rest-timer" id="restTimer">
+          <div class="rest-label" id="timerLabel">Rest</div>
+          <div class="rest-time" id="restTime">0:00</div>
+        </div>
       </div>
     </div>
   </div>

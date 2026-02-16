@@ -452,18 +452,6 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
     });
   }
 
-  function skipRestTimer() {
-    updateAppData((d) => ({
-      ...d,
-      activeSession: d.activeSession
-        ? {
-            ...d.activeSession,
-            timerState: { phase: 'exercise', startedAt: Date.now(), restDurationSeconds: null },
-          }
-        : null,
-    }));
-  }
-
   const displayWeight = weightOverrides[currentExerciseIndex] ?? currentEx.targetWeight;
   const plateResult = currentEx.liftName === 'Weighted Pull-up'
     ? calculateBeltPlates(displayWeight, appData.value.profile.plateInventoryBelt)
@@ -565,18 +553,6 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
               <div class="rest-timer-time">
                 {formatTimerDisplay(timerDisplay.elapsed)}
               </div>
-              {timerDisplay.phase === 'rest' && timerDisplay.restDuration != null && (
-                <div class="rest-timer-target">
-                  Set Time: {formatTimerDisplay(timerDisplay.restDuration * 1000)}
-                </div>
-              )}
-              {timerDisplay.phase === 'rest' && !timerDisplay.isOvertime && (
-                <div class="rest-timer-controls">
-                  <button class="btn btn-secondary" onClick={skipRestTimer} aria-label="Skip rest timer">
-                    Skip
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -645,11 +621,6 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
             {nextSet && (
               <button class="actions-menu-item" onClick={() => { completeSet(); setShowMenu(false); }}>
                 Complete Current Set
-              </button>
-            )}
-            {timerDisplay && timerDisplay.phase === 'rest' && (
-              <button class="actions-menu-item" onClick={() => { skipRestTimer(); setShowMenu(false); }}>
-                Skip Rest
               </button>
             )}
             {timerDisplay && timerDisplay.phase === 'exercise' && (
