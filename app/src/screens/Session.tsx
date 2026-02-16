@@ -40,10 +40,6 @@ export function Session() {
     return <StaleSessionPrompt session={activeSession} />;
   }
 
-  if (activeSession.sessionType === 'endurance') {
-    return <EnduranceSessionView session={activeSession} />;
-  }
-
   return <StrengthSessionView session={activeSession} />;
 }
 
@@ -104,7 +100,6 @@ function PreSessionSetup() {
       templateId: activeProgram!.templateId,
       programWeek: activeProgram!.currentWeek,
       programSession: activeProgram!.currentSession,
-      sessionType: currentSessionDef!.type,
       startedAt: now,
       currentExerciseIndex: 0,
       exercises,
@@ -113,10 +108,6 @@ function PreSessionSetup() {
       exerciseStartTimes: { 0: now },
       restTimerState: null,
     };
-
-    if (currentSessionDef!.type === 'endurance') {
-      session.enduranceDuration = currentSessionDef!.enduranceDuration;
-    }
 
     updateAppData((d) => ({ ...d, activeSession: session }));
   }
@@ -585,91 +576,6 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
           onCancel={() => setShowEndConfirm(false)}
         />
       )}
-    </div>
-  );
-}
-
-// --- Endurance Session ---
-function EnduranceSessionView({ session }: { session: ActiveSessionState }) {
-  const [elapsed, setElapsed] = useState(0);
-  const [started, setStarted] = useState(!!session.enduranceStartedAt);
-
-  useEffect(() => {
-    if (!started || !session.enduranceStartedAt) return;
-    const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - new Date(session.enduranceStartedAt!).getTime()) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [started, session.enduranceStartedAt]);
-
-  function startEndurance() {
-    setStarted(true);
-    updateAppData((d) => ({
-      ...d,
-      activeSession: d.activeSession
-        ? { ...d.activeSession, enduranceStartedAt: new Date().toISOString() }
-        : null,
-    }));
-  }
-
-  function completeEndurance() {
-    feedbackSessionComplete();
-    const durationMinutes = Math.round(elapsed / 60);
-
-    const log: SessionLog = {
-      id: generateId(),
-      date: new Date().toISOString().slice(0, 10),
-      templateId: session.templateId,
-      week: session.programWeek,
-      sessionNumber: session.programSession,
-      status: 'completed',
-      startedAt: session.startedAt,
-      completedAt: new Date().toISOString(),
-      exercises: [],
-      notes: '',
-      durationMinutes,
-      lastModified: new Date().toISOString(),
-    };
-
-    updateAppData((d) => {
-      const program = d.activeProgram;
-      if (!program) return { ...d, activeSession: null, sessionHistory: [...d.sessionHistory, log] };
-
-      const template = getTemplate(program.templateId);
-      let nextSession = program.currentSession + 1;
-      let nextWeek = program.currentWeek;
-      if (template && nextSession > template.sessionsPerWeek) {
-        nextSession = 1;
-        nextWeek++;
-      }
-
-      return {
-        ...d,
-        activeSession: null,
-        sessionHistory: [...d.sessionHistory, log],
-        activeProgram: { ...program, currentWeek: nextWeek, currentSession: nextSession, lastModified: new Date().toISOString() },
-      };
-    });
-
-    navigate('home');
-  }
-
-  const mins = Math.floor(elapsed / 60);
-  const secs = elapsed % 60;
-
-  return (
-    <div class="endurance-session">
-      <h2 style={{ marginBottom: 4 }}>Endurance</h2>
-      <div class="endurance-range">{session.enduranceDuration || '30-60'} minutes</div>
-      <div class="endurance-timer">{mins}:{String(secs).padStart(2, '0')}</div>
-      {!started ? (
-        <button class="btn btn-primary btn-large" onClick={startEndurance}>Start</button>
-      ) : (
-        <button class="btn btn-primary btn-large" onClick={completeEndurance}>Complete</button>
-      )}
-      <button class="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => navigate('home')}>
-        Back
-      </button>
     </div>
   );
 }

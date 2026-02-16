@@ -5,7 +5,7 @@ import type {
 } from '../types';
 import type { TemplateDef } from './definitions';
 import {
-  getTemplate, OPERATOR_ENDURANCE, ZULU_CLUSTER_PERCENTAGES, MASS_STRENGTH_DL_WEEKS,
+  getTemplate, ZULU_CLUSTER_PERCENTAGES, MASS_STRENGTH_DL_WEEKS,
 } from './definitions';
 import { calculatePercentageWeight } from '../calculators/oneRepMax';
 import { calculateBarbellPlates, calculateBeltPlates } from '../calculators/plates';
@@ -25,23 +25,6 @@ export function generateSchedule(
     const sessions: ComputedSession[] = [];
 
     for (const sessionDef of template.sessionDefs) {
-      if (sessionDef.type === 'endurance') {
-        let duration = '';
-        if (template.id === 'operator') {
-          const ed = OPERATOR_ENDURANCE[weekDef.weekNumber];
-          if (ed) {
-            duration = sessionDef.sessionNumber === 6 ? ed.session6 : ed.sessions24;
-          }
-        }
-        sessions.push({
-          sessionNumber: sessionDef.sessionNumber,
-          type: 'endurance',
-          exercises: [],
-          enduranceDuration: duration,
-        });
-        continue;
-      }
-
       // Determine lifts for this session
       const sessionLifts = resolveSessionLifts(sessionDef, template, program);
 
@@ -101,7 +84,6 @@ export function generateSchedule(
 
       sessions.push({
         sessionNumber: sessionDef.sessionNumber,
-        type: 'strength',
         exercises,
       });
     }

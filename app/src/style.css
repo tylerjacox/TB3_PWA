@@ -1399,25 +1399,6 @@ select:focus-visible {
   text-transform: uppercase;
 }
 
-/* --- Endurance Session --- */
-.endurance-session {
-  text-align: center;
-  padding: 32px 16px;
-}
-
-.endurance-timer {
-  font-size: 48px;
-  font-weight: 700;
-  font-family: 'SF Mono', monospace;
-  margin: 24px 0;
-}
-
-.endurance-range {
-  font-size: 18px;
-  color: var(--muted);
-  margin-bottom: 24px;
-}
-
 /* --- Notes --- */
 .notes-field textarea {
   width: 100%;

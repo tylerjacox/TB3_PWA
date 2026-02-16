@@ -85,11 +85,9 @@ export function History() {
               const isExpanded = expandedSession === session.id;
               const durationStr = session.durationSeconds != null
                 ? formatDuration(session.durationSeconds)
-                : session.durationMinutes != null
-                  ? `${session.durationMinutes}m`
-                  : session.startedAt && session.completedAt
-                    ? `${Math.round((new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 60000)}m`
-                    : null;
+                : session.startedAt && session.completedAt
+                  ? `${Math.round((new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 60000)}m`
+                  : null;
 
               return (
                 <div key={session.id} class="history-item" role="listitem">

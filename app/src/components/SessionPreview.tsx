@@ -15,20 +15,6 @@ export function SessionPreview({
   sessionLabel?: string;
   compact?: boolean;
 }) {
-  if (session.type === 'endurance') {
-    return (
-      <div class="session-item">
-        <div class="session-item-header">
-          {sessionLabel || `Session ${session.sessionNumber}`} — Endurance
-        </div>
-        <div class="session-exercise">
-          <span class="session-exercise-name">Duration</span>
-          <span class="session-exercise-weight">{session.enduranceDuration || '30-60'} min</span>
-        </div>
-      </div>
-    );
-  }
-
   const setsLabel = week.setsRange[0] === week.setsRange[1]
     ? `${week.setsRange[0]}`
     : `${week.setsRange[0]}-${week.setsRange[1]}`;

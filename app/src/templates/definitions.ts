@@ -9,7 +9,6 @@ export interface TemplateDef {
   sessionsPerWeek: number;
   requiresLiftSelection: boolean;
   liftSlots?: LiftSlotDef[];
-  hasEndurance: boolean;
   hasSetRange: boolean;
   hideRestTimer?: boolean;
   weeks: WeekDef[];
@@ -26,10 +25,8 @@ export interface WeekDef {
 
 export interface SessionDef {
   sessionNumber: number;
-  type: 'strength' | 'endurance';
   lifts?: string[]; // Lift names or slot references like 'cluster' or 'A' / 'B'
   liftSource?: 'fixed' | 'cluster' | 'A' | 'B';
-  enduranceDuration?: string;
   percentageOverride?: number; // For Zulu cluster differences
   setsOverride?: [number, number];
   repsOverride?: number | number[];
@@ -48,11 +45,10 @@ export interface LiftSlotDef {
 export const OPERATOR: TemplateDef = {
   id: 'operator',
   name: 'Operator',
-  description: 'Balanced strength + endurance. 3 strength days, 3 cardio days/week. 6-week cycle.',
+  description: '3 strength sessions/week. Fixed lifts. 6-week cycle.',
   durationWeeks: 6,
-  sessionsPerWeek: 6,
+  sessionsPerWeek: 3,
   requiresLiftSelection: false,
-  hasEndurance: true,
   hasSetRange: true,
   recommendedDays: [3],
   weeks: [
@@ -64,23 +60,10 @@ export const OPERATOR: TemplateDef = {
     { weekNumber: 6, percentage: 95, setsRange: [3, 4], repsPerSet: [1, 2] },
   ],
   sessionDefs: [
-    { sessionNumber: 1, type: 'strength', lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
-    { sessionNumber: 2, type: 'endurance' },
-    { sessionNumber: 3, type: 'strength', lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
-    { sessionNumber: 4, type: 'endurance' },
-    { sessionNumber: 5, type: 'strength', lifts: ['Squat', 'Bench', 'Deadlift'], liftSource: 'fixed' },
-    { sessionNumber: 6, type: 'endurance' },
+    { sessionNumber: 1, lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
+    { sessionNumber: 2, lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
+    { sessionNumber: 3, lifts: ['Squat', 'Bench', 'Deadlift'], liftSource: 'fixed' },
   ],
-};
-
-// Endurance durations for Operator by week (sessions 2/4 and session 6)
-export const OPERATOR_ENDURANCE: Record<number, { sessions24: string; session6: string }> = {
-  1: { sessions24: '30-60', session6: '60-90' },
-  2: { sessions24: '30-60', session6: '60-90' },
-  3: { sessions24: '30-60', session6: '60-90' },
-  4: { sessions24: '30', session6: '30' },
-  5: { sessions24: '60-90', session6: '90-120' },
-  6: { sessions24: '60-90', session6: '90-120' },
 };
 
 export const ZULU: TemplateDef = {
@@ -90,7 +73,6 @@ export const ZULU: TemplateDef = {
   durationWeeks: 6,
   sessionsPerWeek: 4,
   requiresLiftSelection: true,
-  hasEndurance: false,
   hasSetRange: false,
   recommendedDays: [4],
   liftSlots: [
@@ -106,10 +88,10 @@ export const ZULU: TemplateDef = {
     { weekNumber: 6, percentage: 90, setsRange: [3, 3], repsPerSet: 3 },
   ],
   sessionDefs: [
-    { sessionNumber: 1, type: 'strength', liftSource: 'A' },  // A1 — Cluster One
-    { sessionNumber: 2, type: 'strength', liftSource: 'B' },  // B1 — Cluster One
-    { sessionNumber: 3, type: 'strength', liftSource: 'A' },  // A2 — Cluster Two
-    { sessionNumber: 4, type: 'strength', liftSource: 'B' },  // B2 — Cluster Two
+    { sessionNumber: 1, liftSource: 'A' },  // A1 — Cluster One
+    { sessionNumber: 2, liftSource: 'B' },  // B1 — Cluster One
+    { sessionNumber: 3, liftSource: 'A' },  // A2 — Cluster Two
+    { sessionNumber: 4, liftSource: 'B' },  // B2 — Cluster Two
   ],
 };
 
@@ -130,7 +112,6 @@ export const FIGHTER: TemplateDef = {
   durationWeeks: 6,
   sessionsPerWeek: 2,
   requiresLiftSelection: true,
-  hasEndurance: false,
   hasSetRange: true,
   recommendedDays: [2],
   liftSlots: [
@@ -145,8 +126,8 @@ export const FIGHTER: TemplateDef = {
     { weekNumber: 6, percentage: 90, setsRange: [3, 5], repsPerSet: 3 },
   ],
   sessionDefs: [
-    { sessionNumber: 1, type: 'strength', liftSource: 'cluster' },
-    { sessionNumber: 2, type: 'strength', liftSource: 'cluster' },
+    { sessionNumber: 1, liftSource: 'cluster' },
+    { sessionNumber: 2, liftSource: 'cluster' },
   ],
 };
 
@@ -157,7 +138,6 @@ export const GLADIATOR: TemplateDef = {
   durationWeeks: 6,
   sessionsPerWeek: 3,
   requiresLiftSelection: true,
-  hasEndurance: false,
   hasSetRange: false,
   recommendedDays: [3],
   liftSlots: [
@@ -172,9 +152,9 @@ export const GLADIATOR: TemplateDef = {
     { weekNumber: 6, percentage: 95, setsRange: [5, 5], repsPerSet: [3, 2, 1, 3, 2] },
   ],
   sessionDefs: [
-    { sessionNumber: 1, type: 'strength', liftSource: 'cluster' },
-    { sessionNumber: 2, type: 'strength', liftSource: 'cluster' },
-    { sessionNumber: 3, type: 'strength', liftSource: 'cluster' },
+    { sessionNumber: 1, liftSource: 'cluster' },
+    { sessionNumber: 2, liftSource: 'cluster' },
+    { sessionNumber: 3, liftSource: 'cluster' },
   ],
 };
 
@@ -185,7 +165,6 @@ export const MASS_PROTOCOL: TemplateDef = {
   durationWeeks: 6,
   sessionsPerWeek: 3,
   requiresLiftSelection: true,
-  hasEndurance: false,
   hasSetRange: false,
   hideRestTimer: true,
   recommendedDays: [3],
@@ -201,9 +180,9 @@ export const MASS_PROTOCOL: TemplateDef = {
     { weekNumber: 6, percentage: 90, setsRange: [4, 4], repsPerSet: 3 },
   ],
   sessionDefs: [
-    { sessionNumber: 1, type: 'strength', liftSource: 'cluster' },
-    { sessionNumber: 2, type: 'strength', liftSource: 'cluster' },
-    { sessionNumber: 3, type: 'strength', liftSource: 'cluster' },
+    { sessionNumber: 1, liftSource: 'cluster' },
+    { sessionNumber: 2, liftSource: 'cluster' },
+    { sessionNumber: 3, liftSource: 'cluster' },
   ],
 };
 
@@ -214,7 +193,6 @@ export const MASS_STRENGTH: TemplateDef = {
   durationWeeks: 3,
   sessionsPerWeek: 4,
   requiresLiftSelection: false,
-  hasEndurance: false,
   hasSetRange: false,
   recommendedDays: [3],
   weeks: [
@@ -223,11 +201,11 @@ export const MASS_STRENGTH: TemplateDef = {
     { weekNumber: 3, percentage: 80, setsRange: [4, 4], repsPerSet: 3 },
   ],
   sessionDefs: [
-    { sessionNumber: 1, type: 'strength', lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
-    { sessionNumber: 2, type: 'strength', lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
-    { sessionNumber: 3, type: 'strength', lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
+    { sessionNumber: 1, lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
+    { sessionNumber: 2, lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
+    { sessionNumber: 3, lifts: ['Squat', 'Bench', 'Weighted Pull-up'], liftSource: 'fixed' },
     {
-      sessionNumber: 4, type: 'strength', lifts: ['Deadlift'], liftSource: 'fixed',
+      sessionNumber: 4, lifts: ['Deadlift'], liftSource: 'fixed',
       repsOverride: undefined, // Will use MASS_STRENGTH_DL_WEEKS
     },
   ],
@@ -247,7 +225,6 @@ export const GREY_MAN: TemplateDef = {
   durationWeeks: 12,
   sessionsPerWeek: 3,
   requiresLiftSelection: true,
-  hasEndurance: false,
   hasSetRange: false,
   recommendedDays: [3],
   liftSlots: [
@@ -268,9 +245,9 @@ export const GREY_MAN: TemplateDef = {
     { weekNumber: 12, percentage: 95, setsRange: [3, 3], repsPerSet: 1 },
   ],
   sessionDefs: [
-    { sessionNumber: 1, type: 'strength', liftSource: 'cluster' },
-    { sessionNumber: 2, type: 'strength', liftSource: 'cluster' },
-    { sessionNumber: 3, type: 'strength', liftSource: 'cluster' },
+    { sessionNumber: 1, liftSource: 'cluster' },
+    { sessionNumber: 2, liftSource: 'cluster' },
+    { sessionNumber: 3, liftSource: 'cluster' },
   ],
 };
 

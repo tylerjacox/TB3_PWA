@@ -88,9 +88,7 @@ export interface ComputedWeek {
 
 export interface ComputedSession {
   sessionNumber: number;
-  type: 'strength' | 'endurance';
   exercises: ComputedExercise[];
-  enduranceDuration?: string;
 }
 
 export interface ComputedExercise {
@@ -106,7 +104,6 @@ export interface ActiveSessionState {
   templateId: string;
   programWeek: number;
   programSession: number;
-  sessionType: 'strength' | 'endurance';
   startedAt: string;
   currentExerciseIndex: number;
   exercises: {
@@ -123,9 +120,6 @@ export interface ActiveSessionState {
     running: boolean;
     targetEndTime: number | null;
   } | null;
-  enduranceDuration?: string;
-  enduranceStartedAt?: string;
-  enduranceDurationActual?: number;
 }
 
 export interface SessionSet {
@@ -148,7 +142,6 @@ export interface SessionLog {
   completedAt: string;
   exercises: ExerciseLog[];
   notes: string;
-  durationMinutes?: number;
   durationSeconds?: number;
   lastModified: string;
 }
