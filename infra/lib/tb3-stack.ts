@@ -159,10 +159,10 @@ export class Tb3Stack extends cdk.Stack {
         contentSecurityPolicy: {
           contentSecurityPolicy: [
             "default-src 'self'",
-            "script-src 'self'",
+            "script-src 'self' https://www.gstatic.com https://*.gstatic.com",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data:",
-            `connect-src 'self' https://cognito-idp.${this.region}.amazonaws.com https://*.execute-api.${this.region}.amazonaws.com https://*.auth.${this.region}.amazoncognito.com`,
+            `connect-src 'self' https://cognito-idp.${this.region}.amazonaws.com https://*.execute-api.${this.region}.amazonaws.com https://*.auth.${this.region}.amazoncognito.com https://www.gstatic.com https://*.gstatic.com`,
             `form-action 'self' https://*.auth.${this.region}.amazoncognito.com https://accounts.google.com`,
           ].join('; '),
           override: true,

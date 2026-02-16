@@ -3,6 +3,7 @@ import { App } from './app';
 import { initApp } from './state';
 import { initRouter } from './router';
 import { applyDynamicType } from './services/dynamicType';
+import { initCastSync } from './services/cast';
 import './style.css';
 
 // Initialize router
@@ -13,6 +14,9 @@ initApp();
 
 // Dynamic Type probe
 applyDynamicType();
+
+// Cast sync (reactive effect — SDK loaded lazily on Cast button tap)
+initCastSync();
 
 // Keyboard handling (PRD 6.4)
 window.visualViewport?.addEventListener('resize', () => {

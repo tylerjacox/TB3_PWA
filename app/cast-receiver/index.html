@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TB3 Workout — Cast Receiver</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #111111;
+    --card: #1A1A1A;
+    --text: #FFFFFF;
+    --accent: #FF9500;
+    --muted: #999999;
+    --success: #4CAF50;
+    --border: #333333;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    height: 100vh;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 5%;
+  }
+
+  /* --- Header --- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+  }
+
+  .header-left {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .header-right {
+    font-size: 24px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* --- Main Content --- */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .exercise-name {
+    font-size: 48px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .weight {
+    font-size: 120px;
+    font-weight: 700;
+    letter-spacing: -3px;
+    line-height: 1;
+  }
+
+  .weight .unit {
+    font-size: 36px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 8px;
+  }
+
+  .plates {
+    font-size: 28px;
+    color: var(--muted);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+
+  .reps {
+    font-size: 40px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* --- Set Dots --- */
+  .set-dots {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .set-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .set-dot.completed {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .set-dot.completed::after {
+    content: '\2713';
+    color: #000;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .set-dot.current {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(255, 149, 0, 0.3);
+  }
+
+  /* --- Rest Timer --- */
+  .rest-timer {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .rest-timer.active {
+    display: flex;
+  }
+
+  .rest-label {
+    font-size: 28px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .rest-time {
+    font-size: 96px;
+    font-weight: 700;
+    font-family: 'SF Mono', ui-monospace, monospace;
+    letter-spacing: -2px;
+    color: var(--accent);
+  }
+
+  /* --- Exercise Progress (bottom) --- */
+  .exercise-progress {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-shrink: 0;
+    padding-top: 24px;
+  }
+
+  .ex-pip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 80px;
+  }
+
+  .ex-pip-name {
+    font-size: 14px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+  }
+
+  .ex-pip-bar {
+    width: 60px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .ex-pip-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  .ex-pip.current .ex-pip-name {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .ex-pip.done .ex-pip-fill {
+    background: var(--success);
+  }
+
+  /* --- Idle Screen --- */
+  .idle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 16px;
+  }
+
+  .idle h1 {
+    font-size: 64px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .idle p {
+    font-size: 28px;
+    color: var(--muted);
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Idle Screen -->
+<div id="idle" class="idle">
+  <h1>TB3</h1>
+  <p>Waiting for workout...</p>
+</div>
+
+<!-- Workout Screen -->
+<div id="workout" class="container hidden">
+  <div class="header">
+    <div class="header-left" id="weekSession"></div>
+    <div class="header-right" id="templateName"></div>
+  </div>
+
+  <div class="main">
+    <div class="exercise-name" id="exerciseName"></div>
+
+    <div id="weightSection">
+      <div class="weight">
+        <span id="weightValue"></span><span class="unit" id="weightUnit"></span>
+      </div>
+      <div class="plates" id="plates"></div>
+    </div>
+
+    <div class="set-dots" id="setDots"></div>
+    <div class="reps" id="reps"></div>
+
+    <div class="rest-timer" id="restTimer">
+      <div class="rest-label">Rest</div>
+      <div class="rest-time" id="restTime">0:00</div>
+    </div>
+  </div>
+
+  <div class="exercise-progress" id="exerciseProgress"></div>
+</div>
+
+<!-- Cast Receiver SDK -->
+<script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  var NAMESPACE = 'urn:x-cast:com.tb3.workout';
+  var restInterval = null;
+  var clockOffset = 0; // sender time - local time
+
+  // --- Start Receiver ---
+  var context = cast.framework.CastReceiverContext.getInstance();
+
+  context.addCustomMessageListener(NAMESPACE, function(event) {
+    try {
+      var data = JSON.parse(event.data);
+      if (data.idle) {
+        showIdle();
+      } else {
+        renderWorkout(data);
+      }
+    } catch (e) {
+      console.error('Cast message parse error:', e);
+    }
+  });
+
+  context.start();
+
+  // --- Render ---
+  function showIdle() {
+    document.getElementById('idle').classList.remove('hidden');
+    document.getElementById('workout').classList.add('hidden');
+    stopRestTimer();
+  }
+
+  function renderWorkout(d) {
+    document.getElementById('idle').classList.add('hidden');
+    document.getElementById('workout').classList.remove('hidden');
+
+    // Header
+    document.getElementById('weekSession').textContent =
+      'Week ' + d.week + ' \u2014 Session ' + d.session;
+    document.getElementById('templateName').textContent =
+      d.templateId.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+
+    // Exercise
+    document.getElementById('exerciseName').textContent = d.exerciseName;
+    document.getElementById('weightValue').textContent = d.weight;
+    document.getElementById('weightUnit').textContent = d.unit;
+    document.getElementById('plates').textContent = d.plateBreakdown || '';
+
+    // Reps
+    var allDone = d.completedSets >= d.totalSets;
+    document.getElementById('reps').textContent = allDone
+      ? 'All sets complete'
+      : '\u00D7 ' + d.targetReps + ' reps';
+
+    // Set dots
+    var dotsHtml = '';
+    for (var i = 0; i < d.totalSets; i++) {
+      var cls = 'set-dot';
+      if (i < d.completedSets) cls += ' completed';
+      else if (i === d.completedSets) cls += ' current';
+      dotsHtml += '<div class="' + cls + '"></div>';
+    }
+    document.getElementById('setDots').innerHTML = dotsHtml;
+
+    // Exercise progress
+    var progHtml = '';
+    for (var j = 0; j < d.exercises.length; j++) {
+      var ex = d.exercises[j];
+      var pct = ex.totalSets > 0 ? Math.round((ex.completedSets / ex.totalSets) * 100) : 0;
+      var pipCls = 'ex-pip';
+      if (j === d.currentExerciseIndex) pipCls += ' current';
+      if (pct === 100) pipCls += ' done';
+      progHtml += '<div class="' + pipCls + '">' +
+        '<div class="ex-pip-name">' + escapeHtml(ex.name) + '</div>' +
+        '<div class="ex-pip-bar"><div class="ex-pip-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>';
+    }
+    document.getElementById('exerciseProgress').innerHTML = progHtml;
+
+    // Rest timer
+    if (d.restTimer && d.restTimer.running && d.restTimer.targetEndTime) {
+      clockOffset = d.restTimer.serverTimeNow - Date.now();
+      startRestTimer(d.restTimer.targetEndTime);
+    } else {
+      stopRestTimer();
+    }
+  }
+
+  function startRestTimer(targetEndTime) {
+    stopRestTimer();
+    var el = document.getElementById('restTimer');
+    var timeEl = document.getElementById('restTime');
+    el.classList.add('active');
+
+    function tick() {
+      var now = Date.now() + clockOffset;
+      var remaining = Math.max(0, targetEndTime - now);
+      var mins = Math.floor(remaining / 60000);
+      var secs = Math.floor((remaining % 60000) / 1000);
+      timeEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+      if (remaining <= 0) {
+        stopRestTimer();
+      }
+    }
+
+    tick();
+    restInterval = setInterval(tick, 250);
+  }
+
+  function stopRestTimer() {
+    if (restInterval) {
+      clearInterval(restInterval);
+      restInterval = null;
+    }
+    document.getElementById('restTimer').classList.remove('active');
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>

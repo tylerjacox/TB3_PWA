@@ -6,6 +6,7 @@ import { getTemplate } from '../templates/definitions';
 import { navigate } from '../router';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconMore, IconChevronLeft, IconChevronRight, IconCheck, IconClose } from '../components/Icons';
+import { CastButton } from '../components/CastButton';
 import { PlateDisplay } from '../components/PlateDisplay';
 import { calculateBarbellPlates, calculateBeltPlates } from '../calculators/plates';
 import {
@@ -417,14 +418,17 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
         <div style={{ fontSize: 14, color: 'var(--muted)' }}>
           Week {session.programWeek} — Session {session.programSession}
         </div>
-        <button
-          class="btn btn-ghost"
-          style={{ padding: '8px' }}
-          onClick={() => setShowMenu(!showMenu)}
-          aria-label="Session actions"
-        >
-          <IconMore />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <CastButton />
+          <button
+            class="btn btn-ghost"
+            style={{ padding: '8px' }}
+            onClick={() => setShowMenu(!showMenu)}
+            aria-label="Session actions"
+          >
+            <IconMore />
+          </button>
+        </div>
       </div>
 
       {/* Exercise dots */}
@@ -494,20 +498,22 @@ function StrengthSessionView({ session }: { session: ActiveSessionState }) {
               </div>
             </div>
           )}
-
-          {/* Complete Set Button */}
-          <button
-            class="complete-set-btn"
-            onClick={completeSet}
-            disabled={!nextSet}
-            aria-label={nextSet
-              ? `Complete set ${nextSet.setNumber} of ${exSets.length}, ${currentEx.liftName} at ${displayWeight} pounds`
-              : 'All sets complete'
-            }
-          >
-            {nextSet ? `Complete Set ${nextSet.setNumber} / ${exSets.length}` : 'All Sets Done'}
-          </button>
         </div>
+      </div>
+
+      {/* Complete Set Button — pinned to bottom */}
+      <div class="session-action-bar">
+        <button
+          class="complete-set-btn"
+          onClick={completeSet}
+          disabled={!nextSet}
+          aria-label={nextSet
+            ? `Complete set ${nextSet.setNumber} of ${exSets.length}, ${currentEx.liftName} at ${displayWeight} pounds`
+            : 'All sets complete'
+          }
+        >
+          {nextSet ? `Complete Set ${nextSet.setNumber} / ${exSets.length}` : 'All Sets Done'}
+        </button>
       </div>
 
       {/* Nav buttons */}

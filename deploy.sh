@@ -59,6 +59,13 @@ aws s3 sync app/dist "s3://$BUCKET" --delete \
   --exclude "sw.js" \
   --exclude "manifest.webmanifest"
 
+# Upload Cast receiver (outside Vite build, always revalidate)
+if [ -f app/cast-receiver/index.html ]; then
+  aws s3 cp app/cast-receiver/index.html "s3://$BUCKET/cast-receiver/index.html" \
+    --cache-control "max-age=0,must-revalidate" \
+    --content-type "text/html"
+fi
+
 # Upload non-cacheable files (always revalidate)
 aws s3 cp app/dist/index.html "s3://$BUCKET/index.html" \
   --cache-control "max-age=0,must-revalidate"
@@ -75,7 +82,7 @@ fi
 echo "Invalidating CloudFront..."
 aws cloudfront create-invalidation \
   --distribution-id "$DIST_ID" \
-  --paths "/index.html" "/sw.js" "/manifest.webmanifest"
+  --paths "/index.html" "/sw.js" "/manifest.webmanifest" "/cast-receiver/index.html"
 
 echo ""
 echo "Deploy complete!"

@@ -133,6 +133,7 @@ export function computeSourceHash(
   lifts: DerivedLiftEntry[],
   profile: UserProfile,
 ): string {
+  const template = getTemplate(program.templateId);
   const data = JSON.stringify({
     templateId: program.templateId,
     liftSelections: program.liftSelections,
@@ -142,6 +143,13 @@ export function computeSourceHash(
     maxType: profile.maxType,
     plateInventoryBarbell: profile.plateInventoryBarbell,
     plateInventoryBelt: profile.plateInventoryBelt,
+    // Include template structure so definition changes force recompute
+    templateVersion: template ? {
+      sessionsPerWeek: template.sessionsPerWeek,
+      durationWeeks: template.durationWeeks,
+      sessionDefs: template.sessionDefs.map((s) => ({ n: s.sessionNumber, lifts: s.lifts, src: s.liftSource })),
+      weeks: template.weeks.map((w) => ({ pct: w.percentage, sets: w.setsRange, reps: w.repsPerSet })),
+    } : null,
   });
   // Simple hash
   let hash = 0;
