@@ -93,6 +93,7 @@ struct RootView: View {
         .onChange(of: appState.profile.soundMode) { _, _ in configureFeedback() }
         .onChange(of: appState.profile.voiceAnnouncements) { _, _ in configureFeedback() }
         .onChange(of: appState.profile.voiceName) { _, _ in configureFeedback() }
+        .onChange(of: appState.castState.connected) { _, _ in configureFeedback() }
         .onChange(of: appState.activeSession) { oldVal, newVal in
             // Send idle message when workout ends
             if newVal == nil && oldVal != nil {
@@ -153,7 +154,8 @@ struct RootView: View {
         feedbackService.configure(
             soundMode: appState.profile.soundMode,
             voiceEnabled: appState.profile.voiceAnnouncements,
-            voiceName: appState.profile.voiceName
+            voiceName: appState.profile.voiceName,
+            castConnected: appState.castState.connected
         )
     }
 

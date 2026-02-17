@@ -12,6 +12,7 @@ final class FeedbackService {
     private var soundMode: String = "on"
     private var voiceEnabled: Bool = false
     private var voiceName: String?
+    private var castConnected: Bool = false
 
     // Voice milestone thresholds (seconds remaining)
     private static let milestoneLabels: [Int: String] = [
@@ -21,10 +22,11 @@ final class FeedbackService {
         5: "Five", 4: "Four", 3: "Three", 2: "Two", 1: "One",
     ]
 
-    func configure(soundMode: String, voiceEnabled: Bool, voiceName: String?) {
+    func configure(soundMode: String, voiceEnabled: Bool, voiceName: String?, castConnected: Bool = false) {
         self.soundMode = soundMode
         self.voiceEnabled = voiceEnabled
         self.voiceName = voiceName
+        self.castConnected = castConnected
     }
 
     // MARK: - Haptics
@@ -60,7 +62,7 @@ final class FeedbackService {
     }
 
     private func playTones(_ tones: [ToneSpec]) {
-        guard soundMode == "on" else { return }
+        guard soundMode == "on", !castConnected else { return }
 
         // Configure audio session
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
@@ -111,7 +113,7 @@ final class FeedbackService {
     // MARK: - Speech
 
     private func speak(_ text: String) {
-        guard voiceEnabled else { return }
+        guard voiceEnabled, !castConnected else { return }
         speechSynthesizer.stopSpeaking(at: .immediate)
 
         let utterance = AVSpeechUtterance(string: text)

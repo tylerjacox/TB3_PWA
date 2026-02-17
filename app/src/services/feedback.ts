@@ -1,5 +1,6 @@
 // Haptic + Audio feedback (PRD 10.6)
 import { appData } from '../state';
+import { castState } from './cast';
 
 let audioCtx: AudioContext | null = null;
 let unlocked = false;
@@ -40,6 +41,7 @@ type ToneSpec = { freq: number; duration: number; delay: number; type?: Oscillat
 function playTones(tones: ToneSpec[]) {
   const mode = appData.value.profile.soundMode;
   if (mode !== 'on') return;
+  if (castState.value.connected) return; // TV plays sounds when casting
   try {
     const ctx = getAudioCtx();
     if (ctx.state === 'suspended') ctx.resume();
@@ -131,6 +133,7 @@ export function getAvailableVoices(): SpeechSynthesisVoice[] {
 function speak(text: string) {
   if (!speechAvailable) return;
   if (!appData.value.profile.voiceAnnouncements) return;
+  if (castState.value.connected) return; // TV handles voice when casting
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
