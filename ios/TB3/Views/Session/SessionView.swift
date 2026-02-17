@@ -28,14 +28,16 @@ struct SessionView: View {
     @Environment(\.dismiss) var dismiss
     @Bindable var vm: SessionViewModel
 
-    var body: some View {
-        ZStack {
-            // Main content
-            VStack(spacing: 0) {
-                // Top bar
-                topBar
+    @State private var dragOffset: CGFloat = 0
 
-                if let exercise = vm.currentExercise {
+    var body: some View {
+        VStack(spacing: 0) {
+            // Top bar
+            topBar
+
+            if let exercise = vm.currentExercise {
+                // Swipeable exercise content
+                VStack(spacing: 0) {
                     // Exercise info
                     exerciseInfo(exercise)
                         .padding(.horizontal)
@@ -44,7 +46,7 @@ struct SessionView: View {
                     SetDotIndicators(sets: vm.currentSets)
                         .padding(.top, 12)
 
-                    // Plates — fills all remaining space (single Spacer above + below)
+                    // Plates — fills all remaining space
                     Spacer(minLength: 8)
 
                     PlateDisplayView(
@@ -61,44 +63,45 @@ struct SessionView: View {
                     )
 
                     Spacer(minLength: 8)
-
-                    // Bottom section — fixed height, pinned to bottom
-                    VStack(spacing: 0) {
-                        // Timer (always reserve space to prevent layout shift)
-                        TimerDisplayView(
-                            elapsed: vm.timerElapsed,
-                            phase: vm.timerPhase,
-                            isOvertime: vm.isOvertime
-                        )
-                        .opacity(vm.timerPhase != nil ? 1 : 0)
-                        .padding(.bottom, 12)
-
-                        // Exercise pager dots
-                        if let session = vm.session {
-                            ExerciseDotIndicators(
-                                exercises: session.exercises,
-                                sets: session.sets,
-                                currentIndex: session.currentExerciseIndex,
-                                onSelect: { vm.goToExercise($0) }
-                            )
-                            .padding(.bottom, 8)
-                        }
-
-                        // Undo toast (overlaid so it doesn't shift layout)
-                        undoToastOverlay
-                            .padding(.bottom, 8)
-
-                        // Main action button
-                        mainButton
-                            .padding(.horizontal)
-                            .padding(.bottom, 16)
-                    }
-                    .fixedSize(horizontal: false, vertical: true)
                 }
-            }
+                .contentShape(Rectangle())
+                .offset(x: dragOffset)
+                .clipped()
+                .gesture(exerciseSwipeGesture)
 
-            // Navigation chevrons
-            navigationChevrons
+                // Bottom section — fixed height, pinned to bottom (not swipeable)
+                VStack(spacing: 0) {
+                    // Timer (always reserve space to prevent layout shift)
+                    TimerDisplayView(
+                        elapsed: vm.timerElapsed,
+                        phase: vm.timerPhase,
+                        isOvertime: vm.isOvertime
+                    )
+                    .opacity(vm.timerPhase != nil ? 1 : 0)
+                    .padding(.bottom, 12)
+
+                    // Exercise pager dots
+                    if let session = vm.session {
+                        ExerciseDotIndicators(
+                            exercises: session.exercises,
+                            sets: session.sets,
+                            currentIndex: session.currentExerciseIndex,
+                            onSelect: { vm.goToExercise($0) }
+                        )
+                        .padding(.bottom, 8)
+                    }
+
+                    // Undo toast (overlaid so it doesn't shift layout)
+                    undoToastOverlay
+                        .padding(.bottom, 8)
+
+                    // Main action button
+                    mainButton
+                        .padding(.horizontal)
+                        .padding(.bottom, 16)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .background(Color.tb3Background)
         .confirmDialog(isPresented: $vm.showEndConfirm, config: ConfirmDialogConfig(
@@ -275,37 +278,65 @@ struct SessionView: View {
         .allowsHitTesting(vm.undoSetNumber != nil)
     }
 
-    // MARK: - Navigation Chevrons
+    // MARK: - Swipe Gesture
 
-    private var navigationChevrons: some View {
-        HStack {
-            if let session = vm.session, session.currentExerciseIndex > 0 {
-                Button {
-                    vm.goToExercise(session.currentExerciseIndex - 1)
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.title2)
-                        .foregroundStyle(Color.tb3Muted)
-                        .padding(12)
+    private var exerciseSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 30)
+            .onChanged { value in
+                // Only track horizontal movement, dampen at edges
+                let translation = value.translation.width
+                guard let session = vm.session else { return }
+
+                let atStart = session.currentExerciseIndex == 0 && translation > 0
+                let atEnd = session.currentExerciseIndex >= session.exercises.count - 1 && translation < 0
+
+                // Rubber-band effect at boundaries
+                if atStart || atEnd {
+                    dragOffset = translation * 0.2
+                } else {
+                    dragOffset = translation
                 }
-                .accessibilityLabel("Previous exercise")
             }
+            .onEnded { value in
+                let threshold: CGFloat = 50
+                let translation = value.translation.width
 
-            Spacer()
-
-            if let session = vm.session, session.currentExerciseIndex < session.exercises.count - 1 {
-                Button {
-                    vm.goToExercise(session.currentExerciseIndex + 1)
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.title2)
-                        .foregroundStyle(Color.tb3Muted)
-                        .padding(12)
+                if translation < -threshold {
+                    // Swipe left → next exercise
+                    if let session = vm.session, session.currentExerciseIndex < session.exercises.count - 1 {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            dragOffset = -UIScreen.main.bounds.width
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            vm.goToExercise(session.currentExerciseIndex + 1)
+                            dragOffset = UIScreen.main.bounds.width
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                dragOffset = 0
+                            }
+                        }
+                        return
+                    }
+                } else if translation > threshold {
+                    // Swipe right → previous exercise
+                    if let session = vm.session, session.currentExerciseIndex > 0 {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            dragOffset = UIScreen.main.bounds.width
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            vm.goToExercise(session.currentExerciseIndex - 1)
+                            dragOffset = -UIScreen.main.bounds.width
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                dragOffset = 0
+                            }
+                        }
+                        return
+                    }
                 }
-                .accessibilityLabel("Next exercise")
+
+                // Snap back if not enough distance or at boundary
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    dragOffset = 0
+                }
             }
-        }
-        .frame(maxHeight: .infinity, alignment: .center)
-        .padding(.horizontal, 4)
     }
 }

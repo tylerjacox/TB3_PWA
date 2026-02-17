@@ -44,25 +44,32 @@
     playTones([{freq:784, dur:200, delay:0}, {freq:1047, dur:250, delay:200}, {freq:1319, dur:300, delay:450}]);
   }
   function soundRestComplete() {
-    playTones([{freq:523, dur:200, delay:0}, {freq:659, dur:200, delay:200}, {freq:784, dur:250, delay:400}]);
-    speak('Go');
+    // Bold ascending "Go" signal — no speech synthesis on Chromecast
+    playTones([
+      {freq:523, dur:200, delay:0}, {freq:659, dur:200, delay:200},
+      {freq:784, dur:200, delay:400}, {freq:1047, dur:300, delay:600}
+    ]);
   }
   function soundSessionComplete() {
     playTones([{freq:523, dur:250, delay:0}, {freq:659, dur:250, delay:250}, {freq:784, dur:300, delay:500}]);
   }
 
-  // --- Voice Announcements ---
-  var MILESTONE_LABELS = {60:'One minute', 30:'Thirty seconds', 15:'Fifteen seconds', 5:'5', 4:'4', 3:'3', 2:'2', 1:'1'};
+  // --- Countdown Milestone Tones (replaces speechSynthesis — not available on Chromecast) ---
+  // Each milestone has a distinct tone pattern so the user can recognize the countdown
+  var MILESTONE_TONES = {
+    60: [{freq:440, dur:300, delay:0}],                                       // A4 — single attention tone
+    30: [{freq:440, dur:200, delay:0}, {freq:440, dur:200, delay:300}],       // A4 x2 — double beep
+    15: [{freq:440, dur:150, delay:0}, {freq:440, dur:150, delay:200}, {freq:440, dur:150, delay:400}], // A4 x3 — triple beep
+    5:  [{freq:880, dur:150, delay:0}],                                       // A5 — high beep
+    4:  [{freq:932, dur:150, delay:0}],                                       // Bb5
+    3:  [{freq:988, dur:150, delay:0}],                                       // B5
+    2:  [{freq:1047, dur:150, delay:0}],                                      // C6
+    1:  [{freq:1175, dur:200, delay:0}]                                       // D6 — highest, longest
+  };
 
-  function speak(text) {
-    try {
-      if (!('speechSynthesis' in window)) return;
-      speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.1;
-      u.lang = 'en-US';
-      speechSynthesis.speak(u);
-    } catch (e) { /* Speech may not be available */ }
+  function playMilestone(sec) {
+    var tones = MILESTONE_TONES[sec];
+    if (tones) playTones(tones);
   }
 
   // --- State Tracking (for event detection) ---
@@ -371,14 +378,14 @@
           }
         } else {
           el.classList.remove('overtime');
-          // Voice milestones (countdown to overtime)
+          // Tone milestones (countdown to overtime)
           if (restMs > 0) {
             var remainingMs = restMs - elapsed;
             if (remainingMs > 0) {
               var sec = Math.ceil(remainingMs / 1000);
-              if (sec !== lastAnnouncedSecond && MILESTONE_LABELS[sec]) {
+              if (sec !== lastAnnouncedSecond && MILESTONE_TONES[sec]) {
                 lastAnnouncedSecond = sec;
-                speak(MILESTONE_LABELS[sec]);
+                playMilestone(sec);
               }
             }
           }
