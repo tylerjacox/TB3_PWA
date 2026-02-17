@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -61,6 +61,7 @@
 		B9477A13413CB0B5E364C080 /* OneRepMaxCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9FB1180EA46AF25BB041EB /* OneRepMaxCalculator.swift */; };
 		B967CF42A6D8E082F7E373C5 /* TestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA98F7B155E47A0CB7906055 /* TestFixtures.swift */; };
 		C6F35ACF92059BC700EA014A /* CastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231B17E5B68E62B59A5A6786 /* CastService.swift */; };
+		CALH0001000000000001 /* CalendarHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CALH0002000000000001 /* CalendarHistoryView.swift */; };
 		D27EFDEE74BFC1C81DF932BA /* OneRepMaxCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8260215234F8588409C363ED /* OneRepMaxCalculatorTests.swift */; };
 		D3523EFE6608D5E8D5E6E4ED /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 076AC640F5744B61D010D073 /* AuthViewModel.swift */; };
 		D5FF785748BE0491A56D102C /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A51B7D4A559302486B4FEEC /* ForgotPasswordView.swift */; };
@@ -71,7 +72,6 @@
 		DE0FD218EE22776C54298D55 /* PersistedActiveProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 442BBA70D73FCC2C0376FB27 /* PersistedActiveProgram.swift */; };
 		E2AC87A9550DAF0059AAA8DC /* MigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE6083C8F2C9331E3165AC6 /* MigrationService.swift */; };
 		E558CFCA84221BCC54F0F12F /* MaxChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 723EA4BC8564A3A9198DC7C6 /* MaxChartView.swift */; };
-		CALH0001000000000001 /* CalendarHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CALH0002000000000001 /* CalendarHistoryView.swift */; };
 		E8022F068BA0C48467DCE29D /* PersistedProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AAA6FD7003E87DD988265B /* PersistedProfile.swift */; };
 		E9655E4FBA7B00EA4CB8E199 /* ComputedSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C166ADEE082B0CB819832E /* ComputedSchedule.swift */; };
 		E9D6A96FB07D41D86E1EAACE /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 281E23C5537673A5091ADF2E /* Enums.swift */; };
@@ -79,9 +79,9 @@
 		F39C570AC027C083D23EE89A /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 712B40A95DDC874ACD2B484A /* APIClient.swift */; };
 		F7B53CD0C418C533423FB291 /* AuthFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D37251D5518889CB4C5DD67 /* AuthFlowView.swift */; };
 		FA2216D140F5EBA8CAE499C5 /* ScheduleGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5854483050913F3048DB19B8 /* ScheduleGeneratorTests.swift */; };
+		ICON0001000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ICON0002000000000001 /* Assets.xcassets */; };
 		KFK0KBV0IFJ6O3PNFJXDE0T8 /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = QNJOVYURSYF7GFL79356MSCB /* CustomTabBar.swift */; };
 		SCRN0HDR0001000000000001 /* ScreenHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCRN0HDR0002000000000001 /* ScreenHeader.swift */; };
-		WTRP0001000000000001 /* WeightRepsPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = WTRP0002000000000001 /* WeightRepsPicker.swift */; };
 		TEST0001A00000000001 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002A00000000001 /* SessionViewModelTests.swift */; };
 		TEST0001B00000000001 /* AppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002B00000000001 /* AppStateTests.swift */; };
 		TEST0001C00000000001 /* SyncPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002C00000000001 /* SyncPayloadTests.swift */; };
@@ -89,7 +89,7 @@
 		TEST0001E00000000001 /* ValidationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002E00000000001 /* ValidationServiceTests.swift */; };
 		TEST0001F00000000001 /* FeedbackServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002F00000000001 /* FeedbackServiceTests.swift */; };
 		TEST0001G00000000001 /* DateFormattingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002G00000000001 /* DateFormattingTests.swift */; };
-		ICON0001000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ICON0002000000000001 /* Assets.xcassets */; };
+		WTRP0001000000000001 /* WeightRepsPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = WTRP0002000000000001 /* WeightRepsPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -145,11 +145,10 @@
 		5A51B7D4A559302486B4FEEC /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
 		5DEFCD169638563FCA2DDEB2 /* ProgramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramView.swift; sourceTree = "<group>"; };
 		604923D313B6A2251F361CA9 /* ConfirmDialogModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmDialogModifier.swift; sourceTree = "<group>"; };
-		6CD1A2FDC93911C59AAC2721 /* TB3.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TB3.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6CD1A2FDC93911C59AAC2721 /* TB3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TB3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		70B9C4CB73E04A19A63F138D /* ScheduleGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleGenerator.swift; sourceTree = "<group>"; };
 		712B40A95DDC874ACD2B484A /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		723EA4BC8564A3A9198DC7C6 /* MaxChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaxChartView.swift; sourceTree = "<group>"; };
-		CALH0002000000000001 /* CalendarHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarHistoryView.swift; sourceTree = "<group>"; };
 		79D74DB52E11B9946E71B1E0 /* PlateInventory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateInventory.swift; sourceTree = "<group>"; };
 		8260215234F8588409C363ED /* OneRepMaxCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneRepMaxCalculatorTests.swift; sourceTree = "<group>"; };
 		852C719200DAD0B7EA461CE3 /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
@@ -168,6 +167,7 @@
 		C49C40B5E051775810B7E9F3 /* PlateInventoryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateInventoryEditorView.swift; sourceTree = "<group>"; };
 		C5EFAB12FC6323023EBCEBA8 /* TB3Tests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TB3Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C60615300506094996027A85 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		CALH0002000000000001 /* CalendarHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarHistoryView.swift; sourceTree = "<group>"; };
 		CC43869E7BF890F0C474B7D5 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		D38F5C0DCB90C667423B9FEC /* Step4StartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step4StartView.swift; sourceTree = "<group>"; };
 		D8A5006BC1CCA61F9F5C210F /* DerivedLiftEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DerivedLiftEntry.swift; sourceTree = "<group>"; };
@@ -178,9 +178,9 @@
 		F61BB598438A6D8D9515A006 /* SyncCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCoordinator.swift; sourceTree = "<group>"; };
 		F694AB2EAB1D09B3A6E722AE /* PlateDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDisplayView.swift; sourceTree = "<group>"; };
 		FAE9C2F0601EBF3BA1B44581 /* Date+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Formatting.swift"; sourceTree = "<group>"; };
+		ICON0002000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		QNJOVYURSYF7GFL79356MSCB /* CustomTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
 		SCRN0HDR0002000000000001 /* ScreenHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenHeader.swift; sourceTree = "<group>"; };
-		WTRP0002000000000001 /* WeightRepsPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightRepsPicker.swift; sourceTree = "<group>"; };
 		TEST0002A00000000001 /* SessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModelTests.swift; sourceTree = "<group>"; };
 		TEST0002B00000000001 /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
 		TEST0002C00000000001 /* SyncPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncPayloadTests.swift; sourceTree = "<group>"; };
@@ -188,7 +188,7 @@
 		TEST0002E00000000001 /* ValidationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationServiceTests.swift; sourceTree = "<group>"; };
 		TEST0002F00000000001 /* FeedbackServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackServiceTests.swift; sourceTree = "<group>"; };
 		TEST0002G00000000001 /* DateFormattingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormattingTests.swift; sourceTree = "<group>"; };
-		ICON0002000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		WTRP0002000000000001 /* WeightRepsPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightRepsPicker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,17 +202,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXResourcesBuildPhase section */
-		ICON0003000000000001 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				ICON0001000000000001 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXGroup section */
 		0477C72879E9FE175266E0BE /* ViewModels */ = {
@@ -239,48 +228,6 @@
 				TEST0GRP0VMD000000000001 /* ViewModels */,
 			);
 			path = TB3Tests;
-			sourceTree = "<group>";
-		};
-		TEST0GRP0VMD000000000001 /* ViewModels */ = {
-			isa = PBXGroup;
-			children = (
-				TEST0002A00000000001 /* SessionViewModelTests.swift */,
-			);
-			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		TEST0GRP0STA000000000001 /* State */ = {
-			isa = PBXGroup;
-			children = (
-				TEST0002B00000000001 /* AppStateTests.swift */,
-			);
-			path = State;
-			sourceTree = "<group>";
-		};
-		TEST0GRP0MDL000000000001 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				TEST0002C00000000001 /* SyncPayloadTests.swift */,
-				TEST0002D00000000001 /* EnumTests.swift */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		TEST0GRP0SVC000000000001 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				TEST0002E00000000001 /* ValidationServiceTests.swift */,
-				TEST0002F00000000001 /* FeedbackServiceTests.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		TEST0GRP0EXT000000000001 /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-				TEST0002G00000000001 /* DateFormattingTests.swift */,
-			);
-			path = Extensions;
 			sourceTree = "<group>";
 		};
 		0D389FD000ECFC0E3D3D3759 /* Frameworks */ = {
@@ -441,7 +388,6 @@
 				52D9EFB3FEF72A95963E5731 /* Pods-TB3.debug.xcconfig */,
 				3D3F5A9E2904E359560EC59C /* Pods-TB3.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -556,6 +502,48 @@
 			path = TB3;
 			sourceTree = "<group>";
 		};
+		TEST0GRP0EXT000000000001 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				TEST0002G00000000001 /* DateFormattingTests.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		TEST0GRP0MDL000000000001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				TEST0002C00000000001 /* SyncPayloadTests.swift */,
+				TEST0002D00000000001 /* EnumTests.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		TEST0GRP0STA000000000001 /* State */ = {
+			isa = PBXGroup;
+			children = (
+				TEST0002B00000000001 /* AppStateTests.swift */,
+			);
+			path = State;
+			sourceTree = "<group>";
+		};
+		TEST0GRP0SVC000000000001 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				TEST0002E00000000001 /* ValidationServiceTests.swift */,
+				TEST0002F00000000001 /* FeedbackServiceTests.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		TEST0GRP0VMD000000000001 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				TEST0002A00000000001 /* SessionViewModelTests.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -607,7 +595,6 @@
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					744DC6D1CD7DA60E2562F1DD = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -625,7 +612,6 @@
 			packageReferences = (
 				731635BAE671BF75FC9FF159 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */,
 			);
-			preferredProjectObjectVersion = 77;
 			productRefGroup = CECF7C6F63A556A6787CDA58 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -636,6 +622,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		ICON0003000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ICON0001000000000001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
 		5676F9D0D16C3994EBE3078C /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -645,9 +642,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-TB3/Pods-TB3-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-TB3/Pods-TB3-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -791,7 +792,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = RQL2D445Z7;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TB3/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -893,7 +894,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = RQL2D445Z7;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TB3/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

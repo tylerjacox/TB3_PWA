@@ -1,0 +1,14 @@
+schemaVersion: 1
+sessionDefaults:
+  workspacePath: /Users/tylerjacox/TB3_PWA/ios/TB3.xcworkspace
+  scheme: TB3
+  configuration: Debug
+  simulatorName: iPhone 16 Pro Max
+  simulatorId: EBD9E3F4-5E1D-465F-BDBD-3A95CEB5C3BD
+  simulatorPlatform: iOS Simulator
+  deviceId: C44FA4CB-9045-5116-BBD7-3BDDD23A44EC
+  platform: iOS
+  bundleId: com.tb3.app
+workflows:
+  - device
+  - simulator
