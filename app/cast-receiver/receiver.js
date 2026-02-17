@@ -6,6 +6,72 @@
   var clockOffset = 0; // sender time - local time
   var sessionStartedAt = null; // ISO string from sender
 
+  // --- Audio Feedback (matches feedback.ts) ---
+  var audioCtx = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new AudioContext();
+    return audioCtx;
+  }
+
+  function playTones(tones) {
+    try {
+      var ctx = getAudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      var now = ctx.currentTime;
+      for (var i = 0; i < tones.length; i++) {
+        var t = tones[i];
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        var start = now + t.delay / 1000;
+        var dur = t.dur / 1000;
+        osc.type = 'sine';
+        osc.frequency.value = t.freq;
+        gain.gain.setValueAtTime(0.15, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur);
+      }
+    } catch (e) { /* Audio may not be available */ }
+  }
+
+  function soundSetComplete() {
+    playTones([{freq:660, dur:60, delay:0}, {freq:880, dur:80, delay:60}]);
+  }
+  function soundExerciseComplete() {
+    playTones([{freq:784, dur:100, delay:0}, {freq:1047, dur:150, delay:100}, {freq:1319, dur:200, delay:250}]);
+  }
+  function soundRestComplete() {
+    playTones([{freq:523, dur:100, delay:0}, {freq:659, dur:100, delay:100}, {freq:784, dur:150, delay:200}]);
+    speak('Go');
+  }
+  function soundSessionComplete() {
+    playTones([{freq:523, dur:150, delay:0}, {freq:659, dur:150, delay:150}, {freq:784, dur:200, delay:300}]);
+  }
+
+  // --- Voice Announcements ---
+  var MILESTONE_LABELS = {60:'One minute', 30:'Thirty seconds', 15:'Fifteen seconds', 5:'5', 4:'4', 3:'3', 2:'2', 1:'1'};
+
+  function speak(text) {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.1;
+      u.lang = 'en-US';
+      speechSynthesis.speak(u);
+    } catch (e) { /* Speech may not be available */ }
+  }
+
+  // --- State Tracking (for event detection) ---
+  var prevCompletedSets = -1;
+  var prevExerciseIndex = -1;
+  var prevTotalSets = 0;
+  var lastAnnouncedSecond = null;
+  var restCompleteFired = false;
+
   // Competition plate colors (matches PlateDisplay.tsx)
   var PLATE_COLORS = {
     45: '#C62828', 35: '#F9A825', 25: '#7B1FA2',
@@ -86,6 +152,9 @@
     document.getElementById('idle').classList.remove('hidden');
     document.getElementById('workout').classList.add('hidden');
     sessionStartedAt = null;
+    prevCompletedSets = -1;
+    prevExerciseIndex = -1;
+    prevTotalSets = 0;
     stopTimer();
   }
 
@@ -140,6 +209,31 @@
         '</div>';
     }
     document.getElementById('exerciseProgress').innerHTML = progHtml;
+
+    // --- Audio event detection (compare to previous state) ---
+    if (prevCompletedSets >= 0) {
+      // Check if exercise index changed (reset tracking for new exercise)
+      if (d.currentExerciseIndex !== prevExerciseIndex) {
+        // Exercise changed — reset set tracking, no sound
+        prevCompletedSets = d.completedSets;
+      } else if (d.completedSets > prevCompletedSets) {
+        // Sets increased — determine which event
+        var allExercisesDone = d.exercises.every(function(ex) {
+          return ex.completedSets >= ex.totalSets;
+        });
+
+        if (allExercisesDone) {
+          soundSessionComplete();
+        } else if (d.completedSets >= d.totalSets) {
+          soundExerciseComplete();
+        } else {
+          soundSetComplete();
+        }
+      }
+    }
+    prevCompletedSets = d.completedSets;
+    prevExerciseIndex = d.currentExerciseIndex;
+    prevTotalSets = d.totalSets;
 
     // Two-phase timer
     if (d.timer && d.timer.phase) {
@@ -246,6 +340,10 @@
   function updateTimer(timer) {
     stopTimer();
 
+    // Reset voice/sound tracking for new timer
+    lastAnnouncedSecond = null;
+    restCompleteFired = false;
+
     var el = document.getElementById('restTimer');
     var timeEl = document.getElementById('restTime');
     var labelEl = document.getElementById('timerLabel');
@@ -266,8 +364,24 @@
 
         if (isOvertime) {
           el.classList.add('overtime');
+          // "Go" feedback at overtime threshold (once)
+          if (!restCompleteFired) {
+            restCompleteFired = true;
+            soundRestComplete();
+          }
         } else {
           el.classList.remove('overtime');
+          // Voice milestones (countdown to overtime)
+          if (restMs > 0) {
+            var remainingMs = restMs - elapsed;
+            if (remainingMs > 0) {
+              var sec = Math.ceil(remainingMs / 1000);
+              if (sec !== lastAnnouncedSecond && MILESTONE_LABELS[sec]) {
+                lastAnnouncedSecond = sec;
+                speak(MILESTONE_LABELS[sec]);
+              }
+            }
+          }
         }
       }
 
