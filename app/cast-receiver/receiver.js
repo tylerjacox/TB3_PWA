@@ -27,7 +27,7 @@
         var dur = t.dur / 1000;
         osc.type = 'sine';
         osc.frequency.value = t.freq;
-        gain.gain.setValueAtTime(0.15, start);
+        gain.gain.setValueAtTime(0.5, start);
         gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -38,17 +38,17 @@
   }
 
   function soundSetComplete() {
-    playTones([{freq:660, dur:60, delay:0}, {freq:880, dur:80, delay:60}]);
+    playTones([{freq:660, dur:120, delay:0}, {freq:880, dur:160, delay:120}]);
   }
   function soundExerciseComplete() {
-    playTones([{freq:784, dur:100, delay:0}, {freq:1047, dur:150, delay:100}, {freq:1319, dur:200, delay:250}]);
+    playTones([{freq:784, dur:200, delay:0}, {freq:1047, dur:250, delay:200}, {freq:1319, dur:300, delay:450}]);
   }
   function soundRestComplete() {
-    playTones([{freq:523, dur:100, delay:0}, {freq:659, dur:100, delay:100}, {freq:784, dur:150, delay:200}]);
+    playTones([{freq:523, dur:200, delay:0}, {freq:659, dur:200, delay:200}, {freq:784, dur:250, delay:400}]);
     speak('Go');
   }
   function soundSessionComplete() {
-    playTones([{freq:523, dur:150, delay:0}, {freq:659, dur:150, delay:150}, {freq:784, dur:200, delay:300}]);
+    playTones([{freq:523, dur:250, delay:0}, {freq:659, dur:250, delay:250}, {freq:784, dur:300, delay:500}]);
   }
 
   // --- Voice Announcements ---
