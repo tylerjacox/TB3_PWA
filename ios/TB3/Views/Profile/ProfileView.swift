@@ -6,7 +6,6 @@ import AVFoundation
 struct ProfileView: View {
     @Environment(AppState.self) var appState
     @Bindable var vm: ProfileViewModel
-
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -170,13 +169,14 @@ struct ProfileView: View {
             HStack {
                 Text("Barbell Weight")
                 Spacer()
-                TextField("45", text: Binding(
-                    get: { "\(Int(appState.profile.barbellWeight))" },
-                    set: { vm.updateBarbellWeight($0) }
-                ))
-                .keyboardType(.numberPad)
-                .frame(width: 60)
-                .multilineTextAlignment(.trailing)
+                NumberInputField(
+                    text: Binding(
+                        get: { "\(Int(appState.profile.barbellWeight))" },
+                        set: { vm.updateBarbellWeight($0) }
+                    ),
+                    placeholder: "45"
+                )
+                .frame(width: 60, height: 22)
                 Text("lb")
                     .foregroundStyle(Color.tb3Muted)
             }
@@ -185,13 +185,14 @@ struct ProfileView: View {
             HStack {
                 Text("Rest Timer Default")
                 Spacer()
-                TextField("120", text: Binding(
-                    get: { "\(appState.profile.restTimerDefault)" },
-                    set: { vm.updateRestTimer($0) }
-                ))
-                .keyboardType(.numberPad)
-                .frame(width: 60)
-                .multilineTextAlignment(.trailing)
+                NumberInputField(
+                    text: Binding(
+                        get: { "\(appState.profile.restTimerDefault)" },
+                        set: { vm.updateRestTimer($0) }
+                    ),
+                    placeholder: "120"
+                )
+                .frame(width: 60, height: 22)
                 Text("sec")
                     .foregroundStyle(Color.tb3Muted)
             }

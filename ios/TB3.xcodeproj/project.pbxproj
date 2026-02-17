@@ -81,6 +81,7 @@
 		FA2216D140F5EBA8CAE499C5 /* ScheduleGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5854483050913F3048DB19B8 /* ScheduleGeneratorTests.swift */; };
 		ICON0001000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ICON0002000000000001 /* Assets.xcassets */; };
 		KFK0KBV0IFJ6O3PNFJXDE0T8 /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = QNJOVYURSYF7GFL79356MSCB /* CustomTabBar.swift */; };
+		NUMINP0001000000000001 /* NumberInputField.swift in Sources */ = {isa = PBXBuildFile; fileRef = NUMINP0002000000000001 /* NumberInputField.swift */; };
 		SCRN0HDR0001000000000001 /* ScreenHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCRN0HDR0002000000000001 /* ScreenHeader.swift */; };
 		TEST0001A00000000001 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002A00000000001 /* SessionViewModelTests.swift */; };
 		TEST0001B00000000001 /* AppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST0002B00000000001 /* AppStateTests.swift */; };
@@ -180,6 +181,7 @@
 		FAE9C2F0601EBF3BA1B44581 /* Date+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Formatting.swift"; sourceTree = "<group>"; };
 		ICON0002000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		QNJOVYURSYF7GFL79356MSCB /* CustomTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
+		NUMINP0002000000000001 /* NumberInputField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberInputField.swift; sourceTree = "<group>"; };
 		SCRN0HDR0002000000000001 /* ScreenHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenHeader.swift; sourceTree = "<group>"; };
 		TEST0002A00000000001 /* SessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModelTests.swift; sourceTree = "<group>"; };
 		TEST0002B00000000001 /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
@@ -430,6 +432,7 @@
 				604923D313B6A2251F361CA9 /* ConfirmDialogModifier.swift */,
 				QNJOVYURSYF7GFL79356MSCB /* CustomTabBar.swift */,
 				AF7DF4729B1C82ECC657D26D /* LoadingView.swift */,
+				NUMINP0002000000000001 /* NumberInputField.swift */,
 				SCRN0HDR0002000000000001 /* ScreenHeader.swift */,
 				WTRP0002000000000001 /* WeightRepsPicker.swift */,
 				178C8E940FA99AD06FB1FBF9 /* SessionPreviewCard.swift */,
@@ -768,6 +771,7 @@
 				8BCD51611D5794BA3142C18B /* TimerDisplayView.swift in Sources */,
 				93CCB80A66AD29CFFA84689F /* TokenManager.swift in Sources */,
 				9DD4230C0E0008A0C7370819 /* ValidationService.swift in Sources */,
+				NUMINP0001000000000001 /* NumberInputField.swift in Sources */,
 				SCRN0HDR0001000000000001 /* ScreenHeader.swift in Sources */,
 				WTRP0001000000000001 /* WeightRepsPicker.swift in Sources */,
 				54CDC325272D2FBDD7086F11 /* WeekScheduleView.swift in Sources */,
