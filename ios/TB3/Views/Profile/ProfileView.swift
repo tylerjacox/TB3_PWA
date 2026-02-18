@@ -7,6 +7,7 @@ struct ProfileView: View {
     @Environment(AppState.self) var appState
     @Bindable var vm: ProfileViewModel
     var stravaService: StravaService?
+    var notificationService: NotificationService?
     @State private var showStravaConsent = false
     @State private var showStravaDisconnectConfirm = false
     @State private var shouldConnectStrava = false
@@ -22,6 +23,9 @@ struct ProfileView: View {
 
                     // Settings
                     settingsSection
+
+                    // Notifications
+                    notificationsSection
 
                     // Integrations
                     integrationsSection
@@ -258,6 +262,44 @@ struct ProfileView: View {
         }
     }
 
+    // MARK: - Notifications
+
+    private var notificationsSection: some View {
+        Section("Notifications") {
+            Toggle("Workout Reminders", isOn: Binding(
+                get: { appState.profile.workoutRemindersEnabled },
+                set: { vm.updateWorkoutReminders($0, notificationService: notificationService) }
+            ))
+
+            if appState.profile.workoutRemindersEnabled {
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(Color.tb3Muted)
+                    Text("Daily reminder at 8 AM when you have a pending workout")
+                        .font(.caption)
+                        .foregroundStyle(Color.tb3Muted)
+                }
+            }
+
+            Toggle("Rest Timer Alerts", isOn: Binding(
+                get: { appState.profile.restTimerAlertsEnabled },
+                set: { vm.updateRestTimerAlerts($0, notificationService: notificationService) }
+            ))
+
+            if appState.profile.restTimerAlertsEnabled {
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(Color.tb3Muted)
+                    Text("Notifies when rest is complete while app is in background")
+                        .font(.caption)
+                        .foregroundStyle(Color.tb3Muted)
+                }
+            }
+        }
+    }
+
     // MARK: - Integrations
 
     private var integrationsSection: some View {
@@ -437,6 +479,7 @@ struct ProfileView: View {
                         .foregroundStyle(Color.tb3Muted)
                 }
             }
+
         }
     }
 }

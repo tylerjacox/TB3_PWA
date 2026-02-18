@@ -18,6 +18,17 @@ struct SyncProfile: Codable, Equatable {
     var theme: String
     var unit: String
     var lastModified: String
+
+    // Device-local notification prefs (not synced to PWA)
+    var workoutRemindersEnabled: Bool = false
+    var restTimerAlertsEnabled: Bool = false
+
+    private enum CodingKeys: String, CodingKey {
+        case maxType, roundingIncrement, barbellWeight
+        case plateInventoryBarbell, plateInventoryBelt
+        case restTimerDefault, soundMode, voiceAnnouncements, voiceName
+        case theme, unit, lastModified
+    }
 }
 
 // MARK: - Sync Active Program (mirrors types.ts ActiveProgram for sync)

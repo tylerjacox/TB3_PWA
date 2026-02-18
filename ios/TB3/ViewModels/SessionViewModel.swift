@@ -31,14 +31,16 @@ final class SessionViewModel {
     private let castService: CastService?
     private let stravaService: StravaService?
     private let liveActivityService: LiveActivityService?
+    private let notificationService: NotificationService?
 
-    init(appState: AppState, dataStore: DataStore, feedback: FeedbackService, castService: CastService? = nil, stravaService: StravaService? = nil, liveActivityService: LiveActivityService? = nil) {
+    init(appState: AppState, dataStore: DataStore, feedback: FeedbackService, castService: CastService? = nil, stravaService: StravaService? = nil, liveActivityService: LiveActivityService? = nil, notificationService: NotificationService? = nil) {
         self.appState = appState
         self.dataStore = dataStore
         self.feedback = feedback
         self.castService = castService
         self.stravaService = stravaService
         self.liveActivityService = liveActivityService
+        self.notificationService = notificationService
     }
 
     private func sendCastUpdate() {
@@ -420,6 +422,7 @@ final class SessionViewModel {
 
         // Advance program
         if var program = appState.activeProgram, let template = Templates.get(id: program.templateId) {
+            let oldWeek = program.currentWeek
             program.currentSession += 1
             if program.currentSession > template.sessionsPerWeek {
                 program.currentSession = 1
@@ -433,6 +436,41 @@ final class SessionViewModel {
                 persisted.currentSession = program.currentSession
                 persisted.lastModified = now
                 dataStore.saveActiveProgram(persisted)
+            }
+
+            // Milestone notifications
+            if program.currentWeek > template.durationWeeks {
+                notificationService?.notifyProgramComplete(templateName: template.name)
+            } else if program.currentWeek > oldWeek {
+                notificationService?.notifyWeekComplete(
+                    templateName: template.name,
+                    weekNumber: oldWeek,
+                    totalWeeks: template.durationWeeks
+                )
+            }
+
+            // Reschedule workout reminders with updated next session
+            if appState.profile.workoutRemindersEnabled {
+                if program.currentWeek <= template.durationWeeks,
+                   let schedule = appState.computedSchedule {
+                    let weekIndex = program.currentWeek - 1
+                    let sessionIndex = program.currentSession - 1
+                    if weekIndex >= 0, weekIndex < schedule.weeks.count,
+                       sessionIndex >= 0, sessionIndex < schedule.weeks[weekIndex].sessions.count {
+                        let nextSession = schedule.weeks[weekIndex].sessions[sessionIndex]
+                        let exerciseNames = nextSession.exercises.map {
+                            LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
+                        }
+                        notificationService?.scheduleWorkoutReminders(
+                            templateName: template.name,
+                            weekNumber: program.currentWeek,
+                            sessionNumber: program.currentSession,
+                            exercises: exerciseNames
+                        )
+                    }
+                } else {
+                    notificationService?.cancelWorkoutReminders()
+                }
             }
         }
 

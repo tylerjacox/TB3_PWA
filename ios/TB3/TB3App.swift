@@ -53,6 +53,7 @@ struct RootView: View {
     @State private var castService: CastService?
     @State private var castAdapter: GCKCastSessionAdapter?
     @State private var stravaService: StravaService?
+    @State private var notificationService = NotificationService()
     @State private var selectedTab = 0
 
     var body: some View {
@@ -88,7 +89,8 @@ struct RootView: View {
                     feedback: feedbackService,
                     castService: castService,
                     stravaService: stravaService,
-                    liveActivityService: liveActivityService
+                    liveActivityService: liveActivityService,
+                    notificationService: notificationService
                 ))
                 .environment(appState)
             }
@@ -97,15 +99,39 @@ struct RootView: View {
         .preferredColorScheme(.dark)
         .task { await setup() }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
+            switch newPhase {
+            case .active:
                 syncCoordinator?.onForeground()
                 handleIntentFlags()
+                // Cancel rest timer notification on return to foreground
+                if appState.profile.restTimerAlertsEnabled {
+                    notificationService.cancelRestTimerAlert()
+                }
+            case .background:
+                // Schedule rest timer notification if in rest phase
+                if appState.profile.restTimerAlertsEnabled,
+                   let session = appState.activeSession,
+                   let timer = session.timerState,
+                   timer.phase == .rest,
+                   let restDuration = timer.restDurationSeconds {
+                    notificationService.scheduleRestTimerAlert(
+                        restDurationSeconds: restDuration,
+                        timerStartedAtMs: timer.startedAt
+                    )
+                }
+            default:
+                break
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .tb3IntentFired)) { _ in
             // Intent's perform() posts this AFTER setting UserDefaults flags,
             // solving the timing race where scenePhase fires before flags are set.
             handleIntentFlags()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .tb3NotificationTapped)) { _ in
+            if appState.activeSession != nil {
+                appState.isSessionPresented = true
+            }
         }
         .onChange(of: appState.profile.soundMode) { _, _ in configureFeedback() }
         .onChange(of: appState.profile.voiceAnnouncements) { _, _ in configureFeedback() }
@@ -144,7 +170,7 @@ struct RootView: View {
                 onNavigateToProfile: { selectedTab = 3 },
                 onStartWorkout: { exercises, week, program in
                     if let dataStore {
-                        let sessionVM = SessionViewModel(appState: appState, dataStore: dataStore, feedback: feedbackService, castService: castService, stravaService: stravaService, liveActivityService: liveActivityService)
+                        let sessionVM = SessionViewModel(appState: appState, dataStore: dataStore, feedback: feedbackService, castService: castService, stravaService: stravaService, liveActivityService: liveActivityService, notificationService: notificationService)
                         sessionVM.startSession(exercises: exercises, week: week, program: program)
                     }
                 }
@@ -162,7 +188,7 @@ struct RootView: View {
                     dataStore: dataStore,
                     authService: authService,
                     syncCoordinator: syncCoordinator
-                ), stravaService: stravaService)
+                ), stravaService: stravaService, notificationService: notificationService)
             }
         default:
             EmptyView()
@@ -237,8 +263,48 @@ struct RootView: View {
         // Register App Shortcuts with Siri
         TB3Shortcuts.updateAppShortcutParameters()
 
+        // Notifications: check authorization and reschedule reminders if enabled
+        await notificationService.checkAuthorization()
+        if appState.profile.workoutRemindersEnabled {
+            scheduleWorkoutRemindersFromCurrentProgram()
+        }
+
         // Check for Siri intent flags (cold launch from shortcut)
         handleIntentFlags()
+    }
+
+    // MARK: - Notification Helpers
+
+    private func scheduleWorkoutRemindersFromCurrentProgram() {
+        guard let program = appState.activeProgram,
+              let template = Templates.get(id: program.templateId),
+              let schedule = appState.computedSchedule else {
+            notificationService.cancelWorkoutReminders()
+            return
+        }
+
+        let weekIndex = program.currentWeek - 1
+        let sessionIndex = program.currentSession - 1
+        guard weekIndex >= 0, weekIndex < schedule.weeks.count else {
+            notificationService.cancelWorkoutReminders()
+            return
+        }
+        let week = schedule.weeks[weekIndex]
+        guard sessionIndex >= 0, sessionIndex < week.sessions.count else {
+            notificationService.cancelWorkoutReminders()
+            return
+        }
+        let session = week.sessions[sessionIndex]
+        let exerciseNames = session.exercises.map {
+            LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
+        }
+
+        notificationService.scheduleWorkoutReminders(
+            templateName: template.name,
+            weekNumber: program.currentWeek,
+            sessionNumber: program.currentSession,
+            exercises: exerciseNames
+        )
     }
 
     // MARK: - App Intent Flag Handling
@@ -266,7 +332,8 @@ struct RootView: View {
                 feedback: feedbackService,
                 castService: castService,
                 stravaService: stravaService,
-                liveActivityService: liveActivityService
+                liveActivityService: liveActivityService,
+                notificationService: notificationService
             )
             sessionVM.startSession(exercises: session.exercises, week: week, program: program)
         }

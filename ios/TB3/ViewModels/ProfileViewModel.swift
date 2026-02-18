@@ -128,6 +128,53 @@ final class ProfileViewModel {
         saveProfile()
     }
 
+    func updateWorkoutReminders(_ enabled: Bool, notificationService: NotificationService?) {
+        guard let notificationService else { return }
+        Task {
+            if enabled {
+                let granted = await notificationService.requestPermission()
+                guard granted else { return }
+
+                // Schedule with current next workout info
+                if let program = appState.activeProgram,
+                   let template = Templates.get(id: program.templateId),
+                   let schedule = appState.computedSchedule {
+                    let weekIndex = program.currentWeek - 1
+                    let sessionIndex = program.currentSession - 1
+                    if weekIndex >= 0, weekIndex < schedule.weeks.count,
+                       sessionIndex >= 0, sessionIndex < schedule.weeks[weekIndex].sessions.count {
+                        let session = schedule.weeks[weekIndex].sessions[sessionIndex]
+                        let exerciseNames = session.exercises.map {
+                            LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
+                        }
+                        notificationService.scheduleWorkoutReminders(
+                            templateName: template.name,
+                            weekNumber: program.currentWeek,
+                            sessionNumber: program.currentSession,
+                            exercises: exerciseNames
+                        )
+                    }
+                }
+            } else {
+                notificationService.cancelWorkoutReminders()
+            }
+            appState.profile.workoutRemindersEnabled = enabled
+            saveProfile()
+        }
+    }
+
+    func updateRestTimerAlerts(_ enabled: Bool, notificationService: NotificationService?) {
+        guard let notificationService else { return }
+        Task {
+            if enabled {
+                let granted = await notificationService.requestPermission()
+                guard granted else { return }
+            }
+            appState.profile.restTimerAlertsEnabled = enabled
+            saveProfile()
+        }
+    }
+
     private var previewSynthesizer = AVSpeechSynthesizer()
 
     func previewVoice(_ voiceName: String?) {

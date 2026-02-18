@@ -16,6 +16,8 @@ final class PersistedProfile {
     var voiceName: String?
     var theme: String = "dark"
     var unit: String = "lb"
+    var workoutRemindersEnabled: Bool = false
+    var restTimerAlertsEnabled: Bool = false
     var lastModified: String = ""
 
     init() {
@@ -40,7 +42,7 @@ final class PersistedProfile {
     // MARK: - Conversion to/from sync payload
 
     func toSyncProfile() -> SyncProfile {
-        SyncProfile(
+        var profile = SyncProfile(
             maxType: maxType,
             roundingIncrement: roundingIncrement,
             barbellWeight: barbellWeight,
@@ -54,6 +56,9 @@ final class PersistedProfile {
             unit: unit,
             lastModified: lastModified
         )
+        profile.workoutRemindersEnabled = workoutRemindersEnabled
+        profile.restTimerAlertsEnabled = restTimerAlertsEnabled
+        return profile
     }
 
     func apply(from sync: SyncProfile) {
@@ -69,6 +74,8 @@ final class PersistedProfile {
         theme = sync.theme
         unit = sync.unit
         lastModified = sync.lastModified
+        workoutRemindersEnabled = sync.workoutRemindersEnabled
+        restTimerAlertsEnabled = sync.restTimerAlertsEnabled
     }
 
     // MARK: - Typed accessors
