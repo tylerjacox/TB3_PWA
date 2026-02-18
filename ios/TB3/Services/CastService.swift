@@ -93,15 +93,19 @@ final class CastService {
                 ]
             }
 
-            // Timer
-            var timerDict: [String: Any] = [
-                "phase": state.timerState?.phase.rawValue as Any,
-                "startedAt": state.timerState?.startedAt as Any,
-                "restDurationSeconds": state.timerState?.restDurationSeconds as Any,
-                "serverTimeNow": Date().timeIntervalSince1970 * 1000,
-            ]
-            if state.timerState == nil {
-                timerDict = ["phase": NSNull(), "startedAt": 0, "restDurationSeconds": NSNull(), "serverTimeNow": Date().timeIntervalSince1970 * 1000]
+            // Timer — send elapsedMs so Cast receiver doesn't need clock sync
+            let serverTimeNow = Date().timeIntervalSince1970 * 1000
+            var timerDict: [String: Any]
+            if let timer = state.timerState {
+                timerDict = [
+                    "phase": timer.phase.rawValue,
+                    "startedAt": timer.startedAt,
+                    "restDurationSeconds": timer.restDurationSeconds as Any,
+                    "elapsedMs": max(0, serverTimeNow - timer.startedAt),
+                    "serverTimeNow": serverTimeNow,
+                ]
+            } else {
+                timerDict = ["phase": NSNull(), "startedAt": 0, "restDurationSeconds": NSNull(), "serverTimeNow": serverTimeNow]
             }
 
             payload = [

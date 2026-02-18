@@ -9,6 +9,8 @@ struct ProgramView: View {
     @State private var liftSelections: [String: [String]] = [:]
     @State private var confirmSwitch = false
     @State private var pendingTemplateId: String?
+    @State private var detailSession: ComputedSession?
+    @State private var detailWeek: ComputedWeek?
 
     var dataStore: DataStore
 
@@ -43,6 +45,14 @@ struct ProgramView: View {
                 }
             }
         ))
+        .sheet(isPresented: Binding(
+            get: { detailSession != nil },
+            set: { if !$0 { detailSession = nil; detailWeek = nil } }
+        )) {
+            if let session = detailSession, let week = detailWeek {
+                sessionDetailSheet(session: session, week: week)
+            }
+        }
     }
 
     private var programHeaderTrailing: AnyView? {
@@ -81,7 +91,12 @@ struct ProgramView: View {
                 ForEach(Array(schedule.weeks.enumerated()), id: \.offset) { index, week in
                     WeekScheduleView(
                         week: week,
-                        isCurrent: index + 1 == program.currentWeek
+                        isCurrent: index + 1 == program.currentWeek,
+                        isCompleted: index + 1 < program.currentWeek,
+                        onSessionTap: { session, week in
+                            detailSession = session
+                            detailWeek = week
+                        }
                     )
                 }
             }
@@ -241,6 +256,32 @@ struct ProgramView: View {
             if current.count < max { current.append(liftName) }
         }
         liftSelections[slotLabel] = current
+    }
+
+    // MARK: - Session Detail Sheet
+
+    private func sessionDetailSheet(session: ComputedSession, week: ComputedWeek) -> some View {
+        VStack(spacing: 0) {
+            // Drag indicator
+            Capsule()
+                .fill(Color.tb3Muted.opacity(0.5))
+                .frame(width: 36, height: 5)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
+
+            Text("\(week.label) • \(session.label)")
+                .font(.headline)
+                .padding(.bottom, 12)
+
+            ScrollView {
+                SessionPreviewCard(session: session, week: week)
+                    .padding(.horizontal, 16)
+            }
+        }
+        .background(Color.tb3Background)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.hidden)
+        .preferredColorScheme(.dark)
     }
 
     // MARK: - Start Program

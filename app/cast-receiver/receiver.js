@@ -244,7 +244,13 @@
 
     // Two-phase timer
     if (d.timer && d.timer.phase) {
-      clockOffset = d.timer.serverTimeNow - Date.now();
+      if (d.timer.elapsedMs !== undefined) {
+        // Sender computed elapsed at send time — convert to local startedAt
+        d.timer.startedAt = Date.now() - d.timer.elapsedMs;
+        clockOffset = 0;
+      } else {
+        clockOffset = d.timer.serverTimeNow - Date.now();
+      }
       updateTimer(d.timer);
     } else {
       stopTimer();

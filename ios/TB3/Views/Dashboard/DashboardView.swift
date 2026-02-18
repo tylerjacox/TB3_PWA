@@ -135,8 +135,6 @@ struct DashboardView: View {
                 .controlSize(.large)
             }
 
-            // Backup reminder
-            backupReminder
         }
     }
 
@@ -159,30 +157,6 @@ struct DashboardView: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-    }
-
-    private var backupReminder: some View {
-        Group {
-            if let daysSince = daysSinceBackup, daysSince > 5 {
-                Button {
-                    onNavigateToProfile()
-                } label: {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle")
-                        Text(daysSince > 30 ? "No recent backup" : "Backup \(daysSince) days ago")
-                            .font(.subheadline)
-                        Spacer()
-                        Text("Export")
-                            .font(.caption)
-                    }
-                    .padding()
-                    .background(Color.tb3Accent.opacity(0.15))
-                    .foregroundStyle(Color.tb3Accent)
-                    .cornerRadius(12)
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
 
     // MARK: - Computed
@@ -212,11 +186,4 @@ struct DashboardView: View {
         return (week.sessions[sessionIndex], week)
     }
 
-    private var daysSinceBackup: Int? {
-        guard let dateStr = appState.lastBackupDate,
-              let date = Date.fromISO8601(dateStr) else {
-            return appState.sessionHistory.isEmpty ? nil : 999
-        }
-        return Calendar.current.dateComponents([.day], from: date, to: Date()).day
-    }
 }

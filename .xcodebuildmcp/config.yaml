@@ -10,5 +10,16 @@ sessionDefaults:
   platform: iOS
   bundleId: com.tb3.app
 workflows:
-  - device
   - simulator
+  - device
+  - debugging
+  - logging
+  - macos
+  - ui-automation
+  - simulator-management
+  - swift-package
+  - project-discovery
+  - project-scaffolding
+  - session-management
+  - utilities
+  - doctor

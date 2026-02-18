@@ -5,14 +5,18 @@ import SwiftUI
 struct WeekScheduleView: View {
     let week: ComputedWeek
     var isCurrent: Bool = false
+    var isCompleted: Bool = false
     var defaultOpen: Bool = false
+    var onSessionTap: ((ComputedSession, ComputedWeek) -> Void)?
 
     @State private var isExpanded: Bool
 
-    init(week: ComputedWeek, isCurrent: Bool = false, defaultOpen: Bool = false) {
+    init(week: ComputedWeek, isCurrent: Bool = false, isCompleted: Bool = false, defaultOpen: Bool = false, onSessionTap: ((ComputedSession, ComputedWeek) -> Void)? = nil) {
         self.week = week
         self.isCurrent = isCurrent
+        self.isCompleted = isCompleted
         self.defaultOpen = defaultOpen
+        self.onSessionTap = onSessionTap
         _isExpanded = State(initialValue: defaultOpen || isCurrent)
     }
 
@@ -44,6 +48,14 @@ struct WeekScheduleView: View {
                             .background(Color.tb3Accent.opacity(0.2))
                             .foregroundColor(.tb3Accent)
                             .cornerRadius(4)
+                    } else if isCompleted {
+                        Text("Completed")
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.tb3Success.opacity(0.2))
+                            .foregroundColor(.tb3Success)
+                            .cornerRadius(4)
                     }
 
                     Spacer()
@@ -62,7 +74,7 @@ struct WeekScheduleView: View {
             // Sessions (expanded)
             if isExpanded {
                 ForEach(Array(week.sessions.enumerated()), id: \.offset) { _, session in
-                    SessionPreviewCard(session: session, week: week, compact: true)
+                    SessionPreviewCard(session: session, week: week, compact: true, onTap: onSessionTap != nil ? { onSessionTap?(session, week) } : nil)
                         .padding(.bottom, 8)
                 }
             }

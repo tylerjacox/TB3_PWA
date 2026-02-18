@@ -122,6 +122,7 @@ function buildMessage(session: ActiveSessionState, profile: UserProfile): string
           startedAt: timerState.startedAt,
           restDurationSeconds: timerState.restDurationSeconds,
           serverTimeNow: Date.now(),
+          elapsedMs: Math.max(0, Date.now() - timerState.startedAt),
         }
       : { phase: null, serverTimeNow: Date.now() },
     exercises: exercisesSummary,

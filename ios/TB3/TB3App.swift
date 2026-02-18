@@ -8,6 +8,8 @@ struct TB3App: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @State private var appState = AppState()
 
+    let sharedModelContainer: ModelContainer
+
     init() {
         // Navigation bar: TB3 dark theme (used by Profile NavigationStack for push navigation)
         let navBarAppearance = UINavigationBarAppearance()
@@ -17,6 +19,16 @@ struct TB3App: App {
         navBarAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         UINavigationBar.appearance().standardAppearance = navBarAppearance
         UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
+
+        // Migrate existing SwiftData store to shared App Group container (one-time)
+        SharedContainer.migrateIfNeeded()
+
+        // Create shared ModelContainer for App Group (widgets + main app share data)
+        do {
+            sharedModelContainer = try SharedContainer.makeModelContainer()
+        } catch {
+            fatalError("Failed to create shared ModelContainer: \(error)")
+        }
     }
 
     var body: some Scene {
@@ -24,12 +36,7 @@ struct TB3App: App {
             RootView()
                 .environment(appState)
         }
-        .modelContainer(for: [
-            PersistedProfile.self,
-            PersistedActiveProgram.self,
-            PersistedSessionLog.self,
-            PersistedOneRepMaxTest.self,
-        ])
+        .modelContainer(sharedModelContainer)
     }
 }
 
@@ -42,6 +49,7 @@ struct RootView: View {
     @State private var authService: AuthService?
     @State private var syncCoordinator: SyncCoordinator?
     @State private var feedbackService = FeedbackService()
+    @State private var liveActivityService = LiveActivityService()
     @State private var castService: CastService?
     @State private var castAdapter: GCKCastSessionAdapter?
     @State private var stravaService: StravaService?
@@ -79,7 +87,8 @@ struct RootView: View {
                     dataStore: dataStore,
                     feedback: feedbackService,
                     castService: castService,
-                    stravaService: stravaService
+                    stravaService: stravaService,
+                    liveActivityService: liveActivityService
                 ))
                 .environment(appState)
             }
@@ -90,7 +99,13 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 syncCoordinator?.onForeground()
+                handleIntentFlags()
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .tb3IntentFired)) { _ in
+            // Intent's perform() posts this AFTER setting UserDefaults flags,
+            // solving the timing race where scenePhase fires before flags are set.
+            handleIntentFlags()
         }
         .onChange(of: appState.profile.soundMode) { _, _ in configureFeedback() }
         .onChange(of: appState.profile.voiceAnnouncements) { _, _ in configureFeedback() }
@@ -100,6 +115,7 @@ struct RootView: View {
             // Send idle message when workout ends
             if newVal == nil && oldVal != nil {
                 castService?.sendSessionState(nil)
+                liveActivityService.endActivity()
             }
         }
     }
@@ -127,7 +143,7 @@ struct RootView: View {
                 onNavigateToProfile: { selectedTab = 3 },
                 onStartWorkout: { exercises, week, program in
                     if let dataStore {
-                        let sessionVM = SessionViewModel(appState: appState, dataStore: dataStore, feedback: feedbackService, castService: castService, stravaService: stravaService)
+                        let sessionVM = SessionViewModel(appState: appState, dataStore: dataStore, feedback: feedbackService, castService: castService, stravaService: stravaService, liveActivityService: liveActivityService)
                         sessionVM.startSession(exercises: exercises, week: week, program: program)
                     }
                 }
@@ -184,6 +200,11 @@ struct RootView: View {
         // Load data from SwiftData
         appState.loadInitialData(store)
 
+        // Restart Live Activity for crash-recovered session
+        if let activeSession = appState.activeSession {
+            liveActivityService.startActivity(session: activeSession)
+        }
+
         // Configure feedback from profile settings
         configureFeedback()
 
@@ -210,6 +231,51 @@ struct RootView: View {
         if appState.authState.isAuthenticated {
             coordinator.start()
             await coordinator.performSync()
+        }
+
+        // Register App Shortcuts with Siri
+        TB3Shortcuts.updateAppShortcutParameters()
+
+        // Check for Siri intent flags (cold launch from shortcut)
+        handleIntentFlags()
+    }
+
+    // MARK: - App Intent Flag Handling
+
+    private func handleIntentFlags() {
+        // Start new workout from Siri intent
+        if UserDefaults.standard.bool(forKey: "tb3_intent_start_workout") {
+            UserDefaults.standard.removeObject(forKey: "tb3_intent_start_workout")
+
+            guard let dataStore,
+                  let program = appState.activeProgram,
+                  let schedule = appState.computedSchedule,
+                  appState.activeSession == nil else { return }
+
+            let weekIndex = program.currentWeek - 1
+            let sessionIndex = program.currentSession - 1
+            guard weekIndex >= 0, weekIndex < schedule.weeks.count else { return }
+            let week = schedule.weeks[weekIndex]
+            guard sessionIndex >= 0, sessionIndex < week.sessions.count else { return }
+            let session = week.sessions[sessionIndex]
+
+            let sessionVM = SessionViewModel(
+                appState: appState,
+                dataStore: dataStore,
+                feedback: feedbackService,
+                castService: castService,
+                stravaService: stravaService,
+                liveActivityService: liveActivityService
+            )
+            sessionVM.startSession(exercises: session.exercises, week: week, program: program)
+        }
+
+        // Resume existing workout from Siri intent
+        if UserDefaults.standard.bool(forKey: "tb3_intent_resume_session") {
+            UserDefaults.standard.removeObject(forKey: "tb3_intent_resume_session")
+            if appState.activeSession != nil {
+                appState.isSessionPresented = true
+            }
         }
     }
 }

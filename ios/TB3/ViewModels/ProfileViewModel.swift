@@ -2,6 +2,7 @@
 
 import Foundation
 import AVFoundation
+import WidgetKit
 
 @MainActor @Observable
 final class ProfileViewModel {
@@ -76,6 +77,9 @@ final class ProfileViewModel {
         dataStore.addMaxTest(test)
         appState.regenerateScheduleIfNeeded()
 
+        // Refresh widgets (Lift PRs + Next Workout weights)
+        WidgetCenter.shared.reloadAllTimelines()
+
         expandedLift = nil
         liftWeight = ""
         liftReps = ""
@@ -86,6 +90,8 @@ final class ProfileViewModel {
     func updateMaxType(_ value: String) {
         appState.profile.maxType = value
         saveProfile()
+        appState.regenerateScheduleIfNeeded()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func updateRounding(_ value: Double) {

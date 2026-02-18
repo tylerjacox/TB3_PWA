@@ -14,10 +14,12 @@ A dual-platform strength training system built around the Tactical Barbell metho
 | | iOS App | Web PWA |
 |---|---|---|
 | **Framework** | SwiftUI + SwiftData | Preact 10 + Signals |
-| **Source** | 76 Swift files | 67 TypeScript files |
-| **Storage** | SwiftData (SQLite) | IndexedDB |
+| **Source** | 80+ Swift files | 67 TypeScript files |
+| **Storage** | SwiftData (SQLite, App Group shared) | IndexedDB |
 | **Cast** | Google Cast SDK (CocoaPods) | Google Cast SDK (lazy-loaded) |
 | **Strava** | OAuth2 via ASWebAuthenticationSession | — |
+| **Siri** | App Intents (Start Workout, Log 1RM, What's Next) | — |
+| **Widgets** | WidgetKit (Next Workout, Lift PRs, Progress, Strength Trend) | — |
 | **Offline** | Native | Service worker + precache |
 
 Both platforms share the same Cognito auth, DynamoDB sync backend, and training logic.
@@ -86,6 +88,25 @@ Share completed workouts to Strava as Weight Training activities. Posts include 
 
 Cross-device sync via Cognito auth (email/password + Google OAuth2). Push/pull protocol with automatic token refresh on 401. Last-write-wins for singletons (profile, active program), union-by-ID for sessions and 1RM tests.
 
+### Siri Shortcuts & App Intents (iOS)
+
+Three App Intents exposed to Siri, Shortcuts app, and Spotlight:
+
+- **Start Workout** — Launches today's scheduled session directly from Siri or the Action Button
+- **Log 1RM Test** — Record a new one-rep max for any lift via voice or Shortcuts
+- **What's My Next Workout?** — Returns schedule info with exercises, weights, and sets
+
+### Home Screen Widgets (iOS)
+
+Four WidgetKit widgets for glanceable workout data:
+
+- **Next Workout** — Template name, week/session, exercises with target weights (small + medium)
+- **Lift PRs** — Current 1RM and working max for all lifts with color-coded bars (small + medium)
+- **Progress** — Program completion ring with week counter (small + lock screen circular)
+- **Strength Trend** — Multi-line 1RM progression chart over the last 6 months (small + medium)
+
+Widgets share data via App Group container and refresh on set completion, 1RM test, or sync.
+
 ### Additional Features
 
 - **1RM Calculator** — Epley formula with training max (90%), percentage tables at 65-100%
@@ -94,6 +115,10 @@ Cross-device sync via Cognito auth (email/password + Google OAuth2). Push/pull p
 - **Data Export/Import** — JSON export with 12-step validated import
 - **Offline-First** — Full functionality without network on both platforms
 
+## iOS Roadmap
+
+See [ios/ROADMAP.md](ios/ROADMAP.md) for planned iOS-native enhancements including Live Activities, HealthKit, Apple Watch, Siri Shortcuts, WidgetKit, and more.
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -101,6 +126,8 @@ Cross-device sync via Cognito auth (email/password + Google OAuth2). Push/pull p
 | **iOS** | |
 | UI | SwiftUI + SwiftData |
 | State | `@Observable` AppState |
+| Siri | AppIntents (3 shortcuts) |
+| Widgets | WidgetKit (4 widgets, App Group shared container) |
 | Cast | Google Cast SDK (CocoaPods) |
 | Strava | ASWebAuthenticationSession + Keychain token storage |
 | **Web** | |
@@ -139,13 +166,16 @@ TB3_Tactical_Barbell/
 │   │   ├── Calculators/          # 1RM and plate math (mirrors web)
 │   │   ├── Config/               # App configuration, Strava/Cast credentials
 │   │   ├── Extensions/           # Color+TB3, Date+Formatting, Keychain, PKCE
+│   │   ├── Intents/              # App Intents for Siri shortcuts
 │   │   ├── Models/               # SwiftData models + sync payloads
 │   │   ├── Networking/           # API client, auth, sync, token management
-│   │   ├── Services/             # Strava, Cast, feedback, validation, export/import
+│   │   ├── Services/             # Strava, Cast, feedback, validation, export/import, SharedContainer
 │   │   ├── State/                # AppState, AuthState, SyncState, CastState, StravaState
 │   │   ├── Templates/            # Template definitions + schedule generator
 │   │   ├── ViewModels/           # Auth, Onboarding, Profile, Session
 │   │   └── Views/                # Auth, Dashboard, History, Onboarding, Profile, Program, Session
+│   ├── TB3Widgets/               # WidgetKit extension (4 home screen widgets)
+│   ├── TB3LiveActivity/          # Live Activity extension
 │   ├── TB3Tests/                 # 14 test files (calculators, services, templates, models)
 │   ├── TB3.xcworkspace/          # Use this for builds (CocoaPods)
 │   └── Podfile

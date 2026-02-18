@@ -6,4 +6,8 @@ platform :ios, '17.0'
 target 'TB3' do
   use_frameworks!
   pod 'google-cast-sdk', '~> 4.8'
+
+  target 'TB3Tests' do
+    inherit! :search_paths
+  end
 end

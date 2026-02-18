@@ -1,6 +1,7 @@
 // TB3 iOS — Session ViewModel (workout engine)
 
 import Foundation
+import WidgetKit
 
 @MainActor @Observable
 final class SessionViewModel {
@@ -21,22 +22,32 @@ final class SessionViewModel {
     private var lastAnnouncedSecond: Int?
     private var restCompleteFired = false
 
+    // Live Activity overtime transition tracking
+    private var lastPushedOvertime = false
+
     private let appState: AppState
     private let dataStore: DataStore
     private let feedback: FeedbackService
     private let castService: CastService?
     private let stravaService: StravaService?
+    private let liveActivityService: LiveActivityService?
 
-    init(appState: AppState, dataStore: DataStore, feedback: FeedbackService, castService: CastService? = nil, stravaService: StravaService? = nil) {
+    init(appState: AppState, dataStore: DataStore, feedback: FeedbackService, castService: CastService? = nil, stravaService: StravaService? = nil, liveActivityService: LiveActivityService? = nil) {
         self.appState = appState
         self.dataStore = dataStore
         self.feedback = feedback
         self.castService = castService
         self.stravaService = stravaService
+        self.liveActivityService = liveActivityService
     }
 
     private func sendCastUpdate() {
         castService?.sendSessionState(appState.activeSession)
+    }
+
+    private func sendLiveActivityUpdate() {
+        guard let session = appState.activeSession else { return }
+        liveActivityService?.updateActivity(session: session)
     }
 
     // MARK: - Convenience Accessors
@@ -96,6 +107,13 @@ final class SessionViewModel {
                 let restMs = Double(restDuration) * 1000
                 let newOvertime = elapsed >= restMs
                 if isOvertime != newOvertime { isOvertime = newOvertime }
+
+                // Push Live Activity update on overtime transition
+                if isOvertime != lastPushedOvertime {
+                    lastPushedOvertime = isOvertime
+                    sendLiveActivityUpdate()
+                }
+
                 let remainingMs = restMs - elapsed
 
                 // Voice milestones (countdown to overtime)
@@ -135,9 +153,11 @@ final class SessionViewModel {
             )
             lastAnnouncedSecond = nil
             restCompleteFired = false
+            lastPushedOvertime = false
             appState.activeSession = session
             session.save()
             sendCastUpdate()
+            sendLiveActivityUpdate()
             return
         }
 
@@ -172,6 +192,7 @@ final class SessionViewModel {
             )
             lastAnnouncedSecond = nil
             restCompleteFired = false
+            lastPushedOvertime = false
         } else {
             session.timerState = nil
         }
@@ -187,6 +208,7 @@ final class SessionViewModel {
                 appState.activeSession = session
                 session.save()
                 sendCastUpdate()
+                sendLiveActivityUpdate()
 
                 // Delay auto-advance 1.5 seconds
                 Task {
@@ -200,6 +222,7 @@ final class SessionViewModel {
                     appState.activeSession = s
                     s.save()
                     sendCastUpdate()
+                    sendLiveActivityUpdate()
                 }
                 return
             }
@@ -208,6 +231,7 @@ final class SessionViewModel {
         appState.activeSession = session
         session.save()
         sendCastUpdate()
+        sendLiveActivityUpdate()
 
         // Check if all exercises complete
         if session.sets.allSatisfy(\.completed) {
@@ -240,6 +264,7 @@ final class SessionViewModel {
         appState.activeSession = session
         session.save()
         sendCastUpdate()
+        sendLiveActivityUpdate()
     }
 
     // MARK: - Exercise Navigation
@@ -255,10 +280,12 @@ final class SessionViewModel {
         session.timerState = nil
         lastAnnouncedSecond = nil
         restCompleteFired = false
+        lastPushedOvertime = false
 
         appState.activeSession = session
         session.save()
         sendCastUpdate()
+        sendLiveActivityUpdate()
     }
 
     // MARK: - Start Session
@@ -319,6 +346,7 @@ final class SessionViewModel {
         session.save()
         appState.isSessionPresented = true
         castService?.sendSessionStateImmediate(appState.activeSession)
+        liveActivityService?.startActivity(session: session)
     }
 
     // MARK: - Complete Session
@@ -413,10 +441,16 @@ final class SessionViewModel {
             Task { await stravaService?.shareActivity(session: log) }
         }
 
+        // End Live Activity before clearing session
+        liveActivityService?.endActivity()
+
         // Clear active session
         appState.activeSession = nil
         ActiveSessionState.clear()
         appState.isSessionPresented = false
+
+        // Refresh widgets (Next Workout advances, Progress updates)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: - End Workout Early
@@ -433,6 +467,7 @@ final class SessionViewModel {
         appState.activeSession = session
         session.save()
         sendCastUpdate()
+        sendLiveActivityUpdate()
     }
 
     // MARK: - Rest Duration

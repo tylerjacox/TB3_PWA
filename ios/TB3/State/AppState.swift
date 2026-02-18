@@ -60,7 +60,7 @@ final class AppState {
         return latestByLift.values.map { test in
             let oneRepMax = OneRepMaxCalculator.calculateOneRepMax(weight: test.weight, reps: test.reps)
             let workingMax: Double
-            if test.maxType == "true" {
+            if profile.maxType == "training" {
                 workingMax = OneRepMaxCalculator.calculateTrainingMax(oneRepMax: oneRepMax)
             } else {
                 workingMax = oneRepMax

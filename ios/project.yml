@@ -25,24 +25,79 @@ targets:
       - path: TB3
         excludes:
           - "**/*.plist"
-    info:
-      path: TB3/Info.plist
-      properties:
-        CFBundleDisplayName: TB3
-        CFBundleName: TB3
-        CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "1"
+          - "**/*.entitlements"
+      - path: TB3LiveActivity/WorkoutActivityAttributes.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tb3.app
         INFOPLIST_FILE: TB3/Info.plist
         GENERATE_INFOPLIST_FILE: false
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: RQL2D445Z7
         CODE_SIGN_STYLE: Automatic
         SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_OBJC_BRIDGING_HEADER: TB3/TB3-Bridging-Header.h
+    entitlements:
+      path: TB3/TB3.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.tb3.app
     dependencies:
       - package: aws-sdk-swift
         product: AWSCognitoIdentityProvider
+      - target: TB3LiveActivity
+      - target: TB3Widgets
+
+  TB3LiveActivity:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TB3LiveActivity
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tb3.app.live-activity
+        INFOPLIST_FILE: TB3LiveActivity/Info.plist
+        GENERATE_INFOPLIST_FILE: false
+        DEVELOPMENT_TEAM: RQL2D445Z7
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_STRICT_CONCURRENCY: complete
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks"
+
+  TB3Widgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TB3Widgets
+      - path: TB3/Services/SharedContainer.swift
+      - path: TB3/Models/Enums.swift
+      - path: TB3/Models/SyncPayloads.swift
+      - path: TB3/Models/DerivedLiftEntry.swift
+      - path: TB3/Models/ComputedSchedule.swift
+      - path: TB3/Models/PlateInventory.swift
+      - path: TB3/Models/PersistedProfile.swift
+      - path: TB3/Models/PersistedActiveProgram.swift
+      - path: TB3/Models/PersistedOneRepMaxTest.swift
+      - path: TB3/Models/PersistedSessionLog.swift
+      - path: TB3/Calculators/OneRepMaxCalculator.swift
+      - path: TB3/Calculators/PlateCalculator.swift
+      - path: TB3/Templates/AllTemplates.swift
+      - path: TB3/Templates/TemplateDef.swift
+      - path: TB3/Templates/ScheduleGenerator.swift
+      - path: TB3/Extensions/Color+TB3.swift
+      - path: TB3/Extensions/Date+Formatting.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tb3.app.widgets
+        INFOPLIST_FILE: TB3Widgets/Info.plist
+        GENERATE_INFOPLIST_FILE: false
+        DEVELOPMENT_TEAM: RQL2D445Z7
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_STRICT_CONCURRENCY: complete
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks"
+    entitlements:
+      path: TB3Widgets/TB3Widgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.tb3.app
 
   TB3Tests:
     type: bundle.unit-test
@@ -52,5 +107,6 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tb3.app.tests
+        GENERATE_INFOPLIST_FILE: true
     dependencies:
       - target: TB3

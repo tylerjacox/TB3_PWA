@@ -4,6 +4,7 @@
 import Foundation
 import Network
 import SwiftData
+import WidgetKit
 
 @MainActor
 final class SyncCoordinator {
@@ -114,6 +115,9 @@ final class SyncCoordinator {
 
             // Reload app state from store after merge
             appState.reloadFromStore(dataStore)
+
+            // Refresh widgets after sync merge (data may have changed from another device)
+            WidgetCenter.shared.reloadAllTimelines()
         } catch {
             syncState.isSyncing = false
             syncState.error = error.localizedDescription

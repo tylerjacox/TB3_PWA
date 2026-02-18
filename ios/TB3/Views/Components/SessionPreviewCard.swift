@@ -6,13 +6,33 @@ struct SessionPreviewCard: View {
     let session: ComputedSession
     let week: ComputedWeek
     var compact: Bool = false
+    var onTap: (() -> Void)?
 
     @Environment(AppState.self) var appState
 
     var body: some View {
+        if let onTap {
+            Button(action: onTap) {
+                cardContent
+            }
+            .buttonStyle(.plain)
+        } else {
+            cardContent
+        }
+    }
+
+    private var cardContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(session.label)
-                .font(.headline)
+            HStack {
+                Text(session.label)
+                    .font(.headline)
+                if onTap != nil {
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color.tb3Disabled)
+                }
+            }
 
             ForEach(Array(session.exercises.enumerated()), id: \.offset) { _, exercise in
                 exerciseRow(exercise)
