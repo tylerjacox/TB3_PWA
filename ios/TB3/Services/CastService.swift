@@ -32,6 +32,7 @@ final class CastService {
     // Closure to fetch now-playing info for cast display
     var nowPlayingProvider: (() -> SpotifyNowPlaying?)?
 
+
     init(castState: CastState) {
         self.castState = castState
     }
@@ -151,13 +152,6 @@ final class CastService {
                     "artistName": np.artistName,
                     "isPlaying": np.isPlaying,
                 ]
-                // Send base64 data URI (Chromecast can't load external images)
-                if let base64Art = np.albumArtBase64 {
-                    npDict["albumArtURL"] = base64Art
-                } else if let artURL = np.albumArtURLLarge ?? np.albumArtURL {
-                    // Fallback to URL if base64 not yet downloaded
-                    npDict["albumArtURL"] = artURL
-                }
                 nowPlayingDict = npDict
             }
 

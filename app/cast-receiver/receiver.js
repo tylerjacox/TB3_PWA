@@ -455,19 +455,6 @@
     el.classList.add('active');
     document.getElementById('nowPlayingTrack').textContent = np.trackName;
     document.getElementById('nowPlayingArtist').textContent = np.artistName || '';
-    var art = document.getElementById('nowPlayingArt');
-
-    if (np.albumArtURL) {
-      // albumArtURL is now a base64 data URI from iOS (or a URL fallback)
-      // Data URIs work directly as img src — no CORS issues
-      if (art.src !== np.albumArtURL) {
-        art.src = np.albumArtURL;
-        art.style.display = '';
-      }
-    } else {
-      art.src = '';
-      art.style.display = 'none';
-    }
   }
 
   function escapeHtml(str) {

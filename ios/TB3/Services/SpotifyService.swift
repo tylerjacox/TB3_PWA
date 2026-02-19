@@ -197,9 +197,9 @@ final class SpotifyService: NSObject {
     func startPolling() {
         guard spotifyState.isConnected, !isPolling else { return }
         isPolling = true
-        // Fetch immediately, then every 5 seconds
+        // Fetch immediately, then every 10 seconds
         Task { await fetchNowPlaying() }
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.fetchNowPlaying()
             }
@@ -214,98 +214,96 @@ final class SpotifyService: NSObject {
 
     func fetchNowPlaying() async {
         guard let accessToken = await tokenManager.getValidAccessToken() else {
-            spotifyState.nowPlaying = nil
+            if spotifyState.nowPlaying != nil { spotifyState.nowPlaying = nil }
             return
         }
 
-        guard let url = URL(string: "\(AppConfig.spotifyAPIBaseURL)/me/player/currently-playing") else { return }
+        // Do network + parsing off main thread
+        let result = await Task.detached { [weak self] () -> SpotifyNowPlaying? in
+            return await self?.fetchAndParseNowPlaying(accessToken: accessToken)
+        }.value
+
+        // Back on main actor — only update if changed
+        if let newNP = result {
+            // Preserve isLiked from current state if same track
+            let sameTrack = spotifyState.nowPlaying?.trackId == newNP.trackId
+            let previousLiked = sameTrack ? spotifyState.nowPlaying?.isLiked ?? false : false
+
+            let finalNP = SpotifyNowPlaying(
+                trackId: newNP.trackId,
+                trackName: newNP.trackName,
+                artistName: newNP.artistName,
+                albumArtURL: newNP.albumArtURL,
+                albumArtURLLarge: newNP.albumArtURLLarge,
+                isPlaying: newNP.isPlaying,
+                isLiked: previousLiked
+            )
+
+            if spotifyState.nowPlaying != finalNP {
+                spotifyState.nowPlaying = finalNP
+            }
+
+            if !sameTrack {
+                Task { await checkIfLiked(trackId: newNP.trackId) }
+            }
+        } else {
+            if spotifyState.nowPlaying != nil { spotifyState.nowPlaying = nil }
+        }
+    }
+
+    /// Performs network fetch and JSON parsing off the main actor
+    private nonisolated func fetchAndParseNowPlaying(accessToken: String) async -> SpotifyNowPlaying? {
+        guard let url = URL(string: "\(AppConfig.spotifyAPIBaseURL)/me/player/currently-playing") else { return nil }
 
         var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else { return }
+            guard let httpResponse = response as? HTTPURLResponse else { return nil }
 
             if httpResponse.statusCode == 204 || data.isEmpty {
-                // Nothing playing
-                spotifyState.nowPlaying = nil
-                return
+                return nil
             }
 
-            if httpResponse.statusCode == 401 {
-                // Try refresh once
-                if let newToken = await tokenManager.refreshTokens() {
-                    var retryRequest = request
-                    retryRequest.setValue("Bearer \(newToken)", forHTTPHeaderField: "Authorization")
-                    if let (retryData, retryResponse) = try? await URLSession.shared.data(for: retryRequest),
-                       let retryHttp = retryResponse as? HTTPURLResponse, retryHttp.statusCode == 200 {
-                        parseNowPlaying(retryData)
-                        return
-                    }
-                }
-                spotifyState.nowPlaying = nil
-                return
-            }
+            guard httpResponse.statusCode == 200 else { return nil }
 
-            guard httpResponse.statusCode == 200 else {
-                spotifyState.nowPlaying = nil
-                return
-            }
-
-            parseNowPlaying(data)
+            return parseNowPlayingData(data)
         } catch {
-            // Network error — keep last state
+            return nil // Network error — caller keeps last state
         }
     }
 
-    private func parseNowPlaying(_ data: Data) {
+    /// Pure parsing — no state access, safe to call off main actor
+    private nonisolated func parseNowPlayingData(_ data: Data) -> SpotifyNowPlaying? {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let isPlaying = json["is_playing"] as? Bool,
               let item = json["item"] as? [String: Any],
               let trackName = item["name"] as? String,
               let trackId = item["id"] as? String else {
-            spotifyState.nowPlaying = nil
-            return
+            return nil
         }
 
-        // Artist name(s)
         let artists = item["artists"] as? [[String: Any]] ?? []
         let artistName = artists.compactMap { $0["name"] as? String }.joined(separator: ", ")
 
-        // Album art — Spotify returns images in descending size (640, 300, 64)
         let album = item["album"] as? [String: Any]
         let images = album?["images"] as? [[String: Any]] ?? []
         let sortedImages = images.sorted { ($0["height"] as? Int ?? 0) < ($1["height"] as? Int ?? 0) }
-        let smallestImage = sortedImages.first // ~64px for phone
-        let mediumImage = sortedImages.count >= 2 ? sortedImages[sortedImages.count - 2] : sortedImages.last // ~300px for TV
+        let smallestImage = sortedImages.first
+        let mediumImage = sortedImages.count >= 2 ? sortedImages[sortedImages.count - 2] : sortedImages.last
         let albumArtURL = smallestImage?["url"] as? String
         let albumArtURLLarge = mediumImage?["url"] as? String
 
-        // Preserve isLiked and cached base64 art if same track
-        let sameTrack = spotifyState.nowPlaying?.trackId == trackId
-        let previousLiked = sameTrack ? spotifyState.nowPlaying?.isLiked ?? false : false
-        let cachedBase64 = sameTrack ? spotifyState.nowPlaying?.albumArtBase64 : nil
-
-        spotifyState.nowPlaying = SpotifyNowPlaying(
+        return SpotifyNowPlaying(
             trackId: trackId,
             trackName: trackName,
             artistName: artistName,
             albumArtURL: albumArtURL,
             albumArtURLLarge: albumArtURLLarge,
             isPlaying: isPlaying,
-            isLiked: previousLiked,
-            albumArtBase64: cachedBase64
+            isLiked: false // Caller will merge with existing liked state
         )
-
-        // Check liked status and download art when track changes
-        if !sameTrack {
-            Task { await checkIfLiked(trackId: trackId) }
-            // Download album art for Cast receiver (use smallest ~64px image to keep Cast payload small)
-            if let artURLString = albumArtURL ?? albumArtURLLarge {
-                Task { await downloadAlbumArt(trackId: trackId, urlString: artURLString) }
-            }
-        }
     }
 
     private func checkIfLiked(trackId: String) async {
@@ -330,32 +328,6 @@ final class SpotifyService: NSObject {
             var updated = spotifyState.nowPlaying!
             updated.isLiked = isLiked
             spotifyState.nowPlaying = updated
-        }
-    }
-
-    // MARK: - Album Art Download (for Cast receiver)
-
-    /// Download album art and convert to base64 data URI for Chromecast
-    /// (Chromecast WebView can't load external images due to CORS)
-    private func downloadAlbumArt(trackId: String, urlString: String) async {
-        guard let url = URL(string: urlString) else { return }
-
-        do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200,
-                  !data.isEmpty else { return }
-
-            let base64 = data.base64EncodedString()
-            let mimeType = httpResponse.mimeType ?? "image/jpeg"
-            let dataURI = "data:\(mimeType);base64,\(base64)"
-
-            // Only update if still the same track
-            if spotifyState.nowPlaying?.trackId == trackId {
-                spotifyState.nowPlaying?.albumArtBase64 = dataURI
-            }
-        } catch {
-            print("[Spotify] Failed to download album art: \(error)")
         }
     }
 

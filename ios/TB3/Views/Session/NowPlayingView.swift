@@ -11,27 +11,10 @@ struct NowPlayingView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Album art
-            if let urlString = nowPlaying?.albumArtURL, let url = URL(string: urlString) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.tb3Card)
-                }
+            // Album art — use CachedAlbumArt to avoid re-fetching on every re-render
+            CachedAlbumArt(urlString: nowPlaying?.albumArtURL)
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
-            } else {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.tb3Card)
-                    .frame(width: 44, height: 44)
-                    .overlay {
-                        Image(systemName: "music.note")
-                            .foregroundStyle(Color.tb3Muted)
-                    }
-            }
 
             // Track info
             VStack(alignment: .leading, spacing: 2) {
@@ -92,5 +75,51 @@ struct NowPlayingView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 4)
+    }
+}
+
+/// Caches downloaded album art in memory to avoid re-fetching on every SwiftUI re-render.
+/// AsyncImage re-downloads on each view identity change; this caches by URL.
+private struct CachedAlbumArt: View {
+    let urlString: String?
+
+    @State private var image: UIImage?
+    @State private var loadedURL: String?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.tb3Card)
+                    .overlay {
+                        Image(systemName: "music.note")
+                            .foregroundStyle(Color.tb3Muted)
+                    }
+            }
+        }
+        .onChange(of: urlString) { _, newURL in
+            loadImageIfNeeded(newURL)
+        }
+        .onAppear {
+            loadImageIfNeeded(urlString)
+        }
+    }
+
+    private func loadImageIfNeeded(_ url: String?) {
+        guard let url, url != loadedURL else { return }
+        guard let imageURL = URL(string: url) else { return }
+
+        Task.detached {
+            guard let (data, _) = try? await URLSession.shared.data(from: imageURL),
+                  let uiImage = UIImage(data: data) else { return }
+            await MainActor.run {
+                self.image = uiImage
+                self.loadedURL = url
+            }
+        }
     }
 }

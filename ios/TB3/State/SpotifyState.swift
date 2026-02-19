@@ -10,7 +10,6 @@ struct SpotifyNowPlaying: Equatable {
     let albumArtURLLarge: String? // 300x300 image URL (Cast/TV)
     let isPlaying: Bool
     var isLiked: Bool
-    var albumArtBase64: String? // Base64 data URI for Cast receiver (avoids CORS)
 }
 
 @Observable
@@ -20,4 +19,5 @@ final class SpotifyState {
     var userName: String?
     var nowPlaying: SpotifyNowPlaying?
     var needsReauth = false // Set when token scopes are insufficient
+
 }

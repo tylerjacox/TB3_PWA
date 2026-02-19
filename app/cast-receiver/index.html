@@ -459,15 +459,6 @@
     visibility: visible;
   }
 
-  .now-playing-art {
-    width: 48px;
-    height: 48px;
-    border-radius: 6px;
-    object-fit: cover;
-    background-color: var(--card);
-    flex-shrink: 0;
-  }
-
   .now-playing-info {
     display: flex;
     flex-direction: column;
@@ -543,7 +534,6 @@
 
   <div class="footer">
     <div class="now-playing" id="nowPlaying">
-      <img class="now-playing-art" id="nowPlayingArt" style="display:none" alt="">
       <div class="now-playing-info">
         <div class="now-playing-track" id="nowPlayingTrack"></div>
         <div class="now-playing-artist" id="nowPlayingArtist"></div>

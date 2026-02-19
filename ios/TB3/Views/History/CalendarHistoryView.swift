@@ -7,20 +7,11 @@ struct CalendarHistoryView: View {
 
     @State private var displayedMonth = Date()
     @State private var selectedDate: DateComponents?
+    @State private var cachedSessionsByDay: [DateComponents: [SyncSessionLog]] = [:]
+    @State private var cachedSessionIds: Set<String> = []
 
     private let calendar = Calendar.current
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
-
-    // Sessions grouped by day (year-month-day)
-    private var sessionsByDay: [DateComponents: [SyncSessionLog]] {
-        var dict: [DateComponents: [SyncSessionLog]] = [:]
-        for session in sessions {
-            guard let date = Date.fromISO8601(session.date) else { continue }
-            let dc = calendar.dateComponents([.year, .month, .day], from: date)
-            dict[dc, default: []].append(session)
-        }
-        return dict
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -40,7 +31,7 @@ struct CalendarHistoryView: View {
                 .padding(.bottom, 12)
 
             // Selected day detail
-            if let selected = selectedDate, let daySessions = sessionsByDay[selected], !daySessions.isEmpty {
+            if let selected = selectedDate, let daySessions = cachedSessionsByDay[selected], !daySessions.isEmpty {
                 Divider()
                     .background(Color.tb3Border)
 
@@ -65,6 +56,23 @@ struct CalendarHistoryView: View {
                 }
             }
         }
+        .onAppear { rebuildCacheIfNeeded() }
+        .onChange(of: sessions.count) { _, _ in rebuildCacheIfNeeded() }
+    }
+
+    /// Rebuild the sessionsByDay cache only when sessions actually change
+    private func rebuildCacheIfNeeded() {
+        let currentIds = Set(sessions.map(\.id))
+        guard currentIds != cachedSessionIds else { return }
+        cachedSessionIds = currentIds
+
+        var dict: [DateComponents: [SyncSessionLog]] = [:]
+        for session in sessions {
+            guard let date = Date.fromISO8601(session.date) else { continue }
+            let dc = calendar.dateComponents([.year, .month, .day], from: date)
+            dict[dc, default: []].append(session)
+        }
+        cachedSessionsByDay = dict
     }
 
     // MARK: - Month Header
@@ -137,7 +145,7 @@ struct CalendarHistoryView: View {
 
     private func dayCell(_ day: DayItem) -> some View {
         let isSelected = selectedDate == day.dateComponents
-        let sessionCount = sessionsByDay[day.dateComponents]?.count ?? 0
+        let sessionCount = cachedSessionsByDay[day.dateComponents]?.count ?? 0
         let isToday = day.dateComponents == calendar.dateComponents([.year, .month, .day], from: Date())
 
         return Button {
