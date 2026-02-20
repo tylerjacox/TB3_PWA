@@ -71,6 +71,7 @@ struct SyncSessionLog: Codable, Equatable {
     var notes: String
     var durationSeconds: Int?
     var lastModified: String
+    var temperatureF: Double?
 }
 
 // MARK: - Sync One Rep Max Test (mirrors types.ts OneRepMaxTest for sync)

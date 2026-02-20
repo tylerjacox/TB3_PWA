@@ -14,13 +14,14 @@ A dual-platform strength training system built around the Tactical Barbell metho
 | | iOS App | Web PWA |
 |---|---|---|
 | **Framework** | SwiftUI + SwiftData | Preact 10 + Signals |
-| **Source** | 85+ Swift files | 67 TypeScript files |
+| **Source** | 86+ Swift files | 67 TypeScript files |
 | **Storage** | SwiftData (SQLite, App Group shared) | IndexedDB |
 | **Cast** | Google Cast SDK (CocoaPods) | Google Cast SDK (lazy-loaded) |
 | **Strava** | OAuth2 via ASWebAuthenticationSession | — |
 | **Spotify** | Web API — now playing, playback controls, library | — |
 | **Siri** | App Intents (Start Workout, Log 1RM, What's Next) | — |
 | **Widgets** | WidgetKit (Next Workout, Lift PRs, Progress, Strength Trend) | — |
+| **Weather** | WeatherKit (ambient temperature per session) | — |
 | **Offline** | Native | Service worker + precache |
 
 Both platforms share the same Cognito auth, DynamoDB sync backend, and training logic.
@@ -69,7 +70,7 @@ Per-lift line graphs with Day/Week/Month/Year/All time range filtering.
 
 ### Chromecast
 
-Cast your workout to any TV with a two-column layout optimized for 16:9 screens. Left side shows exercise, weight, and plate diagram; right side shows set progress, reps, and rest timer. Footer displays Spotify now-playing track info, exercise progress bars, and session elapsed time. Clock updates in real time.
+Cast your workout to any TV with a two-column layout optimized for 16:9 screens. Left side shows exercise, weight, and plate diagram; right side shows set progress, reps, and rest timer. Header shows template name and ambient temperature. Footer displays Spotify now-playing track info, exercise progress bars, and session elapsed time. Clock updates in real time.
 
 <p align="center">
   <img src="docs/cast-screen.png" alt="Chromecast workout display with two-column layout" width="720">
@@ -89,7 +90,7 @@ See what's playing and control Spotify directly from the workout session screen.
 
 ### Strava Integration
 
-Share completed workouts to Strava as Weight Training activities. Posts include exercise names, weights, sets, reps, template name, week number, and working percentage.
+Share completed workouts to Strava as Weight Training activities. Posts include exercise names, weights, sets, reps, template name, week number, working percentage, and ambient temperature.
 
 - OAuth2 connect/disconnect from Profile → Integrations
 - Privacy consent sheet before first connection
@@ -120,11 +121,16 @@ Four WidgetKit widgets for glanceable workout data:
 
 Widgets share data via App Group container and refresh on set completion, 1RM test, or sync.
 
+### WeatherKit Integration (iOS)
+
+Ambient temperature is fetched via Apple WeatherKit when a workout starts and attached to the session. Displayed on the Chromecast header during the workout and included in Strava activity descriptions. Uses coarse location (kilometer accuracy) — no GPS tracking.
+
 ### Additional Features
 
 - **1RM Calculator** — Epley formula with training max (90%), percentage tables at 65-100%
 - **Plate Calculator** — Greedy algorithm for barbell and weight belt loading with configurable inventory
 - **Session History** — Complete log with calendar view and per-exercise detail
+- **Swipe Navigation** — Swipe left/right between tabs with directional slide transitions
 - **Data Export/Import** — JSON export with 12-step validated import
 - **Offline-First** — Full functionality without network on both platforms
 
@@ -144,6 +150,7 @@ See [ios/ROADMAP.md](ios/ROADMAP.md) for planned iOS-native enhancements includi
 | Cast | Google Cast SDK (CocoaPods) |
 | Strava | ASWebAuthenticationSession + Keychain token storage |
 | Spotify | Web API + OAuth2 PKCE + Keychain token storage |
+| Weather | WeatherKit + CoreLocation (one-shot, coarse accuracy) |
 | **Web** | |
 | UI | [Preact](https://preactjs.com/) 10 + [Preact Signals](https://preactjs.com/guide/v10/signals/) |
 | Build | [Vite](https://vitejs.dev/) 6 + TypeScript 5 |
@@ -183,7 +190,7 @@ TB3_Tactical_Barbell/
 │   │   ├── Intents/              # App Intents for Siri shortcuts
 │   │   ├── Models/               # SwiftData models + sync payloads
 │   │   ├── Networking/           # API client, auth, sync, token management
-│   │   ├── Services/             # Strava, Spotify, Cast, feedback, validation, export/import, SharedContainer
+│   │   ├── Services/             # Strava, Spotify, Cast, Weather, feedback, validation, export/import, SharedContainer
 │   │   ├── State/                # AppState, AuthState, SyncState, CastState, StravaState, SpotifyState
 │   │   ├── Templates/            # Template definitions + schedule generator
 │   │   ├── ViewModels/           # Auth, Onboarding, Profile, Session

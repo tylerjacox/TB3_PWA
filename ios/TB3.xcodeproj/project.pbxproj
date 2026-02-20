@@ -145,6 +145,7 @@
 		6B5A4F3E2D1C0B9A8F7E6D5C /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D6E7F8A9B0C1D2E3F4A5B6 /* SpotifyService.swift */; };
 		8C7B6A5F4E3D2C1B0A9F8E7D /* SpotifyConsentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E8F9A0B1C2D3E4F5A6B7C8 /* SpotifyConsentView.swift */; };
 		F2E1D0C9B8A7F6E5D4C3B2A1 /* SpotifyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* SpotifyState.swift */; };
+		D6E7F8A9B0C1D2E3F4A5B6C7 /* TB3WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B3C4D5E6F7081929A3B4C5 /* TB3WeatherService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -316,6 +317,7 @@
 		C5D6E7F8A9B0C1D2E3F4A5B6 /* SpotifyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyService.swift; sourceTree = "<group>"; };
 		D7E8F9A0B1C2D3E4F5A6B7C8 /* SpotifyConsentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyConsentView.swift; sourceTree = "<group>"; };
 		E9F0A1B2C3D4E5F6A7B8C9D0 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
+		A2B3C4D5E6F7081929A3B4C5 /* TB3WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TB3WeatherService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -632,6 +634,7 @@
 				B060B147EA5FB8B7926EF0ED /* StravaService.swift */,
 				D0EAE376B92E830AB0D77959 /* StravaTokenManager.swift */,
 				F61BB598438A6D8D9515A006 /* SyncCoordinator.swift */,
+				A2B3C4D5E6F7081929A3B4C5 /* TB3WeatherService.swift */,
 				32E3A17362FF21D895582B7D /* ValidationService.swift */,
 			);
 			path = Services;
@@ -1098,6 +1101,7 @@
 				7FAFD8F6FC09DB9B765BED52 /* SyncState.swift in Sources */,
 				4B6D63C33F1A73421B6658A4 /* TB3App.swift in Sources */,
 				97D63B35A40F7DD39EDBD01B /* TB3Shortcuts.swift in Sources */,
+				D6E7F8A9B0C1D2E3F4A5B6C7 /* TB3WeatherService.swift in Sources */,
 				577821CAC5B17EB8090C1FF9 /* TemplateDef.swift in Sources */,
 				8BCD51611D5794BA3142C18B /* TimerDisplayView.swift in Sources */,
 				93CCB80A66AD29CFFA84689F /* TokenManager.swift in Sources */,

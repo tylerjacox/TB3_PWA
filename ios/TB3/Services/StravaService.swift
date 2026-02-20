@@ -175,9 +175,12 @@ final class StravaService: NSObject {
 
     func shareActivity(session: SyncSessionLog) async {
         let activity = StravaActivityFormatter.format(session: session)
+        print("[Strava] Sharing activity: \(activity.name)")
+        print("[Strava] Description: \(activity.description)")
 
         do {
             try await postActivity(activity)
+            print("[Strava] Share succeeded")
             stravaState.lastShareSuccess = true
             stravaState.lastShareError = nil
         } catch StravaError.unauthorized, StravaError.sessionExpired {
@@ -198,6 +201,7 @@ final class StravaService: NSObject {
                 stravaState.lastShareError = "Strava session expired. Please reconnect."
             }
         } catch {
+            print("[Strava] Share error: \(error.localizedDescription)")
             stravaState.lastShareSuccess = false
             stravaState.lastShareError = error.localizedDescription
         }
@@ -227,11 +231,13 @@ final class StravaService: NSObject {
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw StravaError.networkError
         }
+
+        print("[Strava] POST /activities → \(httpResponse.statusCode)")
 
         switch httpResponse.statusCode {
         case 200...201:
@@ -241,6 +247,8 @@ final class StravaService: NSObject {
         case 429:
             throw StravaError.rateLimited
         default:
+            let body = String(data: data, encoding: .utf8) ?? "no body"
+            print("[Strava] Error body: \(body)")
             throw StravaError.apiError("Strava returned status \(httpResponse.statusCode)")
         }
     }
@@ -292,7 +300,11 @@ enum StravaActivityFormatter {
         let percentage = weekDef?.percentage ?? 0
 
         lines.append("")
-        lines.append("TB3 \(templateName) | Week \(session.week) Session \(session.sessionNumber) | \(percentage)%")
+        if let temp = session.temperatureF {
+            lines.append("TB3 \(templateName) | Week \(session.week) Session \(session.sessionNumber) | \(percentage)% | \(Int(temp))°F")
+        } else {
+            lines.append("TB3 \(templateName) | Week \(session.week) Session \(session.sessionNumber) | \(percentage)%")
+        }
 
         // Duration
         let start = Date.fromISO8601(session.startedAt) ?? Date()

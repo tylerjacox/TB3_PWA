@@ -32,6 +32,8 @@ final class CastService {
     // Closure to fetch now-playing info for cast display
     var nowPlayingProvider: (() -> SpotifyNowPlaying?)?
 
+    // Closure to fetch ambient temperature for cast display
+    var temperatureProvider: (() -> Double?)?
 
     init(castState: CastState) {
         self.castState = castState
@@ -147,12 +149,11 @@ final class CastService {
             // Now playing (Spotify)
             var nowPlayingDict: [String: Any]?
             if let np = nowPlayingProvider?() {
-                var npDict: [String: Any] = [
+                nowPlayingDict = [
                     "trackName": np.trackName,
                     "artistName": np.artistName,
                     "isPlaying": np.isPlaying,
                 ]
-                nowPlayingDict = npDict
             }
 
             payload = [
@@ -173,6 +174,7 @@ final class CastService {
                 "templateId": state.templateId,
                 "startedAt": state.startedAt,
                 "nowPlaying": nowPlayingDict as Any,
+                "temperatureF": temperatureProvider?() as Any,
             ]
         } else {
             payload = ["idle": true]

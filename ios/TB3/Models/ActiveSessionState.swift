@@ -40,6 +40,7 @@ struct ActiveSessionState: Codable, Equatable {
     var weekPercentage: Double
     var minSets: Int?
     var maxSets: Int?
+    var temperatureF: Double? // Ambient temperature at session start (°F)
 
     // MARK: - Persistence via UserDefaults
 

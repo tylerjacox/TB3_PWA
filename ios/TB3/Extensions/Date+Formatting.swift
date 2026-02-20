@@ -2,10 +2,37 @@
 
 import Foundation
 
+// MARK: - Cached Formatters (expensive to create, reuse them)
+
+nonisolated(unsafe) private let iso8601Formatter: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    return f
+}()
+
+nonisolated(unsafe) private let iso8601FractionalFormatter: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f
+}()
+
+private let shortDisplayFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.dateStyle = .medium
+    f.timeStyle = .none
+    return f
+}()
+
+private let fullDisplayFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.dateStyle = .medium
+    f.timeStyle = .short
+    return f
+}()
+
 extension Date {
     /// ISO 8601 string (matching PWA's new Date().toISOString())
     var iso8601: String {
-        ISO8601DateFormatter().string(from: self)
+        iso8601Formatter.string(from: self)
     }
 
     /// ISO 8601 string for current time
@@ -20,25 +47,17 @@ extension Date {
 
     /// Parse ISO 8601 string
     static func fromISO8601(_ string: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: string) ?? ISO8601DateFormatter().date(from: string)
+        iso8601FractionalFormatter.date(from: string) ?? iso8601Formatter.date(from: string)
     }
 
     /// Display format: "Jan 15, 2024"
     var shortDisplay: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: self)
+        shortDisplayFormatter.string(from: self)
     }
 
     /// Display format: "Jan 15, 2024 at 3:30 PM"
     var fullDisplay: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: self)
+        fullDisplayFormatter.string(from: self)
     }
 }
 

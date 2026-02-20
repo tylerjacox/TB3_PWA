@@ -163,7 +163,7 @@ struct RootView: View {
                 .clipped()
                 .transition(tabTransition)
                 .animation(.spring(duration: 0.3, bounce: 0.0), value: selectedTab)
-                .overlay {
+                .background {
                     SwipeGestureOverlay(
                         onSwipeLeft: {
                             if selectedTab < 3 {
@@ -291,6 +291,7 @@ struct RootView: View {
         let cast = CastService(castState: appState.castState)
         cast.stateProvider = { [weak appState] in appState?.activeSession }
         cast.nowPlayingProvider = { [weak appState] in appState?.spotifyState.nowPlaying }
+        cast.temperatureProvider = { [weak appState] in appState?.activeSession?.temperatureF }
         let adapter = GCKCastSessionAdapter(castService: cast, castState: appState.castState)
         adapter.onRequestSendState = { [weak cast] in
             cast?.sendSessionStateImmediate(appState.activeSession)

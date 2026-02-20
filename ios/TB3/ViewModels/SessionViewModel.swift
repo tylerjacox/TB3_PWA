@@ -354,6 +354,18 @@ final class SessionViewModel {
         castService?.sendSessionStateImmediate(appState.activeSession)
         liveActivityService?.startActivity(session: session)
         spotifyService?.startPolling()
+
+        // Fetch ambient temperature (async, doesn't block session start)
+        Task {
+            let weatherService = TB3WeatherService()
+            if let temp = await weatherService.fetchCurrentTemperature() {
+                guard var s = appState.activeSession else { return }
+                s.temperatureF = temp
+                appState.activeSession = s
+                s.save()
+                castService?.sendSessionState(s)
+            }
+        }
     }
 
     // MARK: - Complete Session
@@ -418,7 +430,8 @@ final class SessionViewModel {
             exercises: exerciseLogs,
             notes: "",
             durationSeconds: nil,
-            lastModified: now
+            lastModified: now,
+            temperatureF: session.temperatureF
         )
 
         // Save to history
@@ -480,8 +493,9 @@ final class SessionViewModel {
         }
 
         // Auto-share to Strava
-        if appState.stravaState.isConnected && appState.stravaState.autoShare {
-            Task { await stravaService?.shareActivity(session: log) }
+        if appState.stravaState.isConnected && appState.stravaState.autoShare,
+           let strava = stravaService {
+            Task { await strava.shareActivity(session: log) }
         }
 
         // Stop Spotify polling

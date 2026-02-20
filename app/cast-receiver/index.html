@@ -57,9 +57,18 @@
   }
 
   .header-right {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
     font-size: 24px;
     color: var(--accent);
     font-weight: 700;
+  }
+
+  .temp {
+    font-size: 22px;
+    color: var(--muted);
+    font-weight: 500;
   }
 
   /* --- Two-Column Main --- */
@@ -502,7 +511,10 @@
   <div class="header">
     <div class="header-left" id="weekSession"></div>
     <div class="header-center" id="clock"></div>
-    <div class="header-right" id="templateName"></div>
+    <div class="header-right">
+      <span id="templateName"></span>
+      <span class="temp" id="temperature"></span>
+    </div>
   </div>
 
   <div class="main">

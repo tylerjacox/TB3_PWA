@@ -221,6 +221,14 @@
     }
     document.getElementById('exerciseProgress').innerHTML = progHtml;
 
+    // Temperature
+    var tempEl = document.getElementById('temperature');
+    if (d.temperatureF != null) {
+      tempEl.textContent = Math.round(d.temperatureF) + '\u00B0F';
+    } else {
+      tempEl.textContent = '';
+    }
+
     // Now Playing (Spotify)
     renderNowPlaying(d.nowPlaying);
 

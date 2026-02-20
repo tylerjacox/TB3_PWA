@@ -17,6 +17,7 @@ final class PersistedSessionLog {
     var notes: String = ""
     var durationSeconds: Int?
     var lastModified: String = ""
+    var temperatureF: Double?
 
     init() {}
 
@@ -33,6 +34,7 @@ final class PersistedSessionLog {
         self.notes = sync.notes
         self.durationSeconds = sync.durationSeconds
         self.lastModified = sync.lastModified
+        self.temperatureF = sync.temperatureF
     }
 
     // MARK: - Exercises accessor
@@ -57,7 +59,8 @@ final class PersistedSessionLog {
             exercises: exercises,
             notes: notes,
             durationSeconds: durationSeconds,
-            lastModified: lastModified
+            lastModified: lastModified,
+            temperatureF: temperatureF
         )
     }
 
