@@ -71,7 +71,7 @@ struct Step3PreviewView: View {
         let repsStr: String
         switch week.repsPerSet {
         case .single(let r): repsStr = "\(r)"
-        case .array(let arr): repsStr = arr.map(String.init).joined(separator: ",")
+        case .array(let arr): repsStr = arr.map(String.init).joined(separator: "-")
         }
 
         if let minSets = week.minSets, let maxSets = week.maxSets, minSets != maxSets {

@@ -58,6 +58,7 @@ Every exercise shows a color-coded barbell or belt diagram. Heaviest plates sit 
 - Two-phase timer — rest count-up with overtime detection + exercise duration tracking
 - Voice announcements with countdown milestones and configurable voice
 - Undo last set, auto-regulate (finish early after minimum sets)
+- Workout completion summary with per-exercise volume, plate visualizers, and shareable screenshot
 - Session persistence — survives crashes, force-quit, and phone death
 
 ### 1RM Progression Charts
@@ -90,7 +91,7 @@ See what's playing and control Spotify directly from the workout session screen.
 
 ### Strava Integration
 
-Share completed workouts to Strava as Weight Training activities. Posts include exercise names, weights, sets, reps, template name, week number, working percentage, and ambient temperature.
+Share completed workouts to Strava as Weight Training activities. Posts include exercise names, weights, sets, reps, per-exercise and total volume, template name, week number, working percentage, and ambient temperature.
 
 - OAuth2 connect/disconnect from Profile → Integrations
 - Privacy consent sheet before first connection
@@ -135,6 +136,7 @@ Aggressive caching throughout the `@Observable` architecture to avoid redundant 
 - **Cached ModelContainer** — `IntentDataProvider` reuses a single `ModelContainer` for Siri intent queries instead of creating one per method call
 - **Persistent ViewModels** — `ProfileViewModel` created once at startup and reused across tab switches
 - **Cast payload deduplication** — Sync timer sends lightweight timer-only JSON when workout state hasn't changed, avoiding full payload rebuild every 5 seconds
+- **Cast timer reliability** — Debounce and sync timers use `RunLoop.common` mode so they fire during swipe animations and scrolling, not just idle
 - **SwiftData predicate queries** — Sync push fetches only modified records via `#Predicate` instead of loading all records and filtering in memory
 
 ### Additional Features

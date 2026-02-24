@@ -284,6 +284,7 @@ enum StravaActivityFormatter {
         let name = "TB3 \(templateName) — W\(session.week)/S\(session.sessionNumber)"
 
         var lines: [String] = []
+        var sessionVolume = 0
         for exercise in session.exercises {
             let liftDisplay = LiftName(rawValue: exercise.liftName)?.displayName ?? exercise.liftName
             let completedSets = exercise.sets.filter(\.completed)
@@ -291,7 +292,19 @@ enum StravaActivityFormatter {
             let reps = completedSets.first?.actualReps ?? completedSets.first?.targetReps ?? 0
             let partial = completedSets.count < totalSets ? " (partial)" : ""
             let weight = Int(exercise.targetWeight)
-            lines.append("\(liftDisplay): \(weight) lb — \(completedSets.count)×\(reps)\(partial)")
+            let exerciseVolume = weight * completedSets.reduce(0) { $0 + $1.actualReps }
+            sessionVolume += exerciseVolume
+            if exerciseVolume > 0 {
+                lines.append("\(liftDisplay): \(weight) lb — \(completedSets.count)×\(reps)\(partial) [\(exerciseVolume.formatted()) lb]")
+            } else {
+                lines.append("\(liftDisplay): \(weight) lb — \(completedSets.count)×\(reps)\(partial)")
+            }
+        }
+
+        // Total volume
+        if sessionVolume > 0 {
+            lines.append("")
+            lines.append("Total Volume: \(sessionVolume.formatted()) lb")
         }
 
         // Footer

@@ -96,6 +96,9 @@
 		AF84313E4F2925575B625B14 /* IntentDataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEF8AC87314E54FD3A4479D2 /* IntentDataProvider.swift */; };
 		B0657A1162F9A522D024F220 /* ConfirmDialogModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604923D313B6A2251F361CA9 /* ConfirmDialogModifier.swift */; };
 		B27FA96696BBAD18B94E02E6 /* PersistedActiveProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 442BBA70D73FCC2C0376FB27 /* PersistedActiveProgram.swift */; };
+		B3E9D1F5A2C4068E7B9D3F1A /* WorkoutCompleteSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C4F8A2E1D3B5E9F0A6C7D8E /* WorkoutCompleteSummary.swift */; };
+		2F1E0D9C8B7A6F5E4D3C2B1A /* WorkoutShareCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7A8B9C0D1E2F /* WorkoutShareCard.swift */; };
+		4B3A2F1E0D9C8B7A6F5E4D3C /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4D5E6F7A8B9C0D1E2F3A4B /* ShareSheet.swift */; };
 		B49450A59D9449BA346B6BD4 /* Pods_TB3Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60CAB50B7F84AA391A5F1590 /* Pods_TB3Tests.framework */; };
 		B707B89B5FE6AA858C0B6935 /* Color+TB3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 145930EA5A3B498A891AB0F4 /* Color+TB3.swift */; };
 		B781A4E5784CFD5D5605E454 /* PlateDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F694AB2EAB1D09B3A6E722AE /* PlateDisplayView.swift */; };
@@ -264,6 +267,9 @@
 		784169C105D90595307B2D8B /* Pods-TB3.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TB3.release.xcconfig"; path = "Target Support Files/Pods-TB3/Pods-TB3.release.xcconfig"; sourceTree = "<group>"; };
 		785B5CA03EE13D9D9B2BE071 /* NextWorkoutWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextWorkoutWidget.swift; sourceTree = "<group>"; };
 		79D74DB52E11B9946E71B1E0 /* PlateInventory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateInventory.swift; sourceTree = "<group>"; };
+		7C4F8A2E1D3B5E9F0A6C7D8E /* WorkoutCompleteSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutCompleteSummary.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F7A8B9C0D1E2F /* WorkoutShareCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutShareCard.swift; sourceTree = "<group>"; };
+		3C4D5E6F7A8B9C0D1E2F3A4B /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		7AD9A16EF3711DD239B3B4A5 /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
 		8260215234F8588409C363ED /* OneRepMaxCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneRepMaxCalculatorTests.swift; sourceTree = "<group>"; };
 		852C719200DAD0B7EA461CE3 /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
@@ -424,6 +430,9 @@
 				852C719200DAD0B7EA461CE3 /* SessionView.swift */,
 				3795D85825481D29AC7C94C5 /* SetDotIndicators.swift */,
 				234223E4428B350E9B415833 /* TimerDisplayView.swift */,
+				7C4F8A2E1D3B5E9F0A6C7D8E /* WorkoutCompleteSummary.swift */,
+				1A2B3C4D5E6F7A8B9C0D1E2F /* WorkoutShareCard.swift */,
+				3C4D5E6F7A8B9C0D1E2F3A4B /* ShareSheet.swift */,
 			);
 			path = Session;
 			sourceTree = "<group>";
@@ -1109,6 +1118,9 @@
 				54CDC325272D2FBDD7086F11 /* WeekScheduleView.swift in Sources */,
 				E7838664E8D85C20CF876F12 /* WeightRepsPicker.swift in Sources */,
 				DA4371D47C700CD4008E8E4D /* WorkoutActivityAttributes.swift in Sources */,
+				B3E9D1F5A2C4068E7B9D3F1A /* WorkoutCompleteSummary.swift in Sources */,
+				2F1E0D9C8B7A6F5E4D3C2B1A /* WorkoutShareCard.swift in Sources */,
+				4B3A2F1E0D9C8B7A6F5E4D3C /* ShareSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

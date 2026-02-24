@@ -31,6 +31,18 @@ struct SessionView: View {
     @State private var dragOffset: CGFloat = 0
 
     var body: some View {
+        Group {
+            if let summary = vm.completionSummary {
+                WorkoutCompleteSummary(sessionLog: summary, onDismiss: { vm.dismissCompletionSummary() })
+                    .transition(.opacity)
+            } else {
+                sessionContent
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: vm.completionSummary != nil)
+    }
+
+    private var sessionContent: some View {
         VStack(spacing: 0) {
             // Top bar
             topBar
@@ -195,7 +207,7 @@ struct SessionView: View {
                 let sets = vm.currentSets.count
                 switch exercise.repsPerSet {
                 case .single(let r): return "\(sets) sets \u{00D7} \(r) reps"
-                case .array(let arr): return "\(sets) sets \u{00D7} \(arr.map(String.init).joined(separator: ",")) reps"
+                case .array(let arr): return "\(sets) sets \u{00D7} \(arr.map(String.init).joined(separator: "-")) reps"
                 }
             }()
             Text(setsRepsStr)

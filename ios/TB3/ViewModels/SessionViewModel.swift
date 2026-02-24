@@ -18,6 +18,9 @@ final class SessionViewModel {
     var showActionsMenu = false
     var showEndConfirm = false
 
+    // Completion summary (non-nil = show summary screen)
+    var completionSummary: SyncSessionLog?
+
     // Voice tracking
     private var lastAnnouncedSecond: Int?
     private var restCompleteFired = false
@@ -505,10 +508,10 @@ final class SessionViewModel {
         // End Live Activity before clearing session
         liveActivityService?.endActivity()
 
-        // Clear active session
-        appState.activeSession = nil
+        // Show completion summary (defer UI dismissal until user taps Done)
+        completionSummary = log
         ActiveSessionState.clear()
-        appState.isSessionPresented = false
+        castService?.sendSessionState(nil)
 
         // Refresh widgets (Next Workout advances, Progress updates)
         WidgetCenter.shared.reloadAllTimelines()
@@ -518,6 +521,12 @@ final class SessionViewModel {
 
     func endWorkoutEarly() {
         completeSession()
+    }
+
+    func dismissCompletionSummary() {
+        completionSummary = nil
+        appState.activeSession = nil
+        appState.isSessionPresented = false
     }
 
     // MARK: - Stop Timer

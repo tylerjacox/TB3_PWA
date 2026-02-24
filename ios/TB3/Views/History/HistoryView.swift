@@ -140,6 +140,13 @@ struct SessionLogRow: View {
     @State private var isSharing = false
     @State private var shareResult: Bool?
 
+    private var sessionVolume: Int {
+        session.exercises.reduce(0) { total, exercise in
+            let completedReps = exercise.sets.filter(\.completed).reduce(0) { $0 + $1.actualReps }
+            return total + Int(exercise.targetWeight) * completedReps
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Button {
@@ -149,9 +156,14 @@ struct SessionLogRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(session.templateId.capitalized)
                             .font(.subheadline.bold())
-                        Text("Week \(session.week) \u{2022} Session \(session.sessionNumber)")
-                            .font(.caption)
-                            .foregroundStyle(Color.tb3Muted)
+                        HStack(spacing: 4) {
+                            Text("Week \(session.week) \u{2022} Session \(session.sessionNumber)")
+                            if sessionVolume > 0 {
+                                Text("\u{2022} \(sessionVolume.formatted()) lb")
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(Color.tb3Muted)
                     }
                     Spacer()
                     if let date = Date.fromISO8601(session.date) {

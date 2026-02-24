@@ -87,7 +87,7 @@ struct WeekScheduleView: View {
         case .single(let r):
             repsStr = "\(r)"
         case .array(let arr):
-            repsStr = arr.map { "\($0)" }.joined(separator: ",")
+            repsStr = arr.map { "\($0)" }.joined(separator: "-")
         }
 
         if let min = week.minSets, let max = week.maxSets, min != max {

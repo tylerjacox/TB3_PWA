@@ -75,7 +75,7 @@ final class CastService {
     func sendSessionState(_ state: ActiveSessionState?) {
         stateVersion += 1
         debounceTimer?.invalidate()
-        debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
+        let timer = Timer(timeInterval: 0.3, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.sendMessageImmediate(state)
@@ -83,6 +83,8 @@ final class CastService {
                 self.updateSyncTimer(hasTimer: state?.timerState != nil)
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        debounceTimer = timer
     }
 
     /// Send immediately (for initial connection, no debounce)
@@ -98,7 +100,7 @@ final class CastService {
     private func updateSyncTimer(hasTimer: Bool) {
         if hasTimer && castState.connected {
             guard syncTimer == nil else { return }
-            syncTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            let timer = Timer(timeInterval: 5.0, repeats: true) { [weak self] _ in
                 Task { @MainActor [weak self] in
                     guard let self else { return }
                     guard let state = self.stateProvider?(), let timer = state.timerState else {
@@ -115,6 +117,8 @@ final class CastService {
                     }
                 }
             }
+            RunLoop.main.add(timer, forMode: .common)
+            syncTimer = timer
         } else {
             syncTimer?.invalidate()
             syncTimer = nil

@@ -93,7 +93,7 @@ struct SessionPreviewCard: View {
         case .single(let r):
             repsStr = "\(r)"
         case .array(let arr):
-            repsStr = arr.map { "\($0)" }.joined(separator: ",")
+            repsStr = arr.map { "\($0)" }.joined(separator: "-")
         }
 
         if let minSets = week.minSets, let maxSets = week.maxSets, minSets != maxSets {
