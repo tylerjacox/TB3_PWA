@@ -57,6 +57,7 @@ struct RootView: View {
     @State private var notificationService = NotificationService()
     @State private var selectedTab = 0
     @State private var tabDirection: TabDirection = .none
+    @State private var profileViewModel: ProfileViewModel?
 
     private enum TabDirection {
         case left, right, none
@@ -234,13 +235,8 @@ struct RootView: View {
         case 2:
             HistoryView(stravaService: stravaService)
         case 3:
-            if let dataStore, let authService, let syncCoordinator {
-                ProfileView(vm: ProfileViewModel(
-                    appState: appState,
-                    dataStore: dataStore,
-                    authService: authService,
-                    syncCoordinator: syncCoordinator
-                ), stravaService: stravaService, spotifyService: spotifyService, notificationService: notificationService)
+            if let vm = profileViewModel {
+                ProfileView(vm: vm, stravaService: stravaService, spotifyService: spotifyService, notificationService: notificationService)
             }
         default:
             EmptyView()
@@ -275,6 +271,7 @@ struct RootView: View {
         self.dataStore = store
         self.authService = auth
         self.syncCoordinator = coordinator
+        self.profileViewModel = ProfileViewModel(appState: appState, dataStore: store, authService: auth, syncCoordinator: coordinator)
 
         // Load data from SwiftData
         appState.loadInitialData(store)

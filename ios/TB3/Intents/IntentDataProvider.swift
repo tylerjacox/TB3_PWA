@@ -7,8 +7,13 @@ import SwiftData
 @MainActor
 enum IntentDataProvider {
 
+    private static var _cachedContainer: ModelContainer?
+
     private static func makeContainer() throws -> ModelContainer {
-        try SharedContainer.makeModelContainer()
+        if let c = _cachedContainer { return c }
+        let c = try SharedContainer.makeModelContainer()
+        _cachedContainer = c
+        return c
     }
 
     // MARK: - Data Loading

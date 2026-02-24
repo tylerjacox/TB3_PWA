@@ -7,17 +7,28 @@ struct CalendarHistoryView: View {
 
     @State private var displayedMonth = Date()
     @State private var selectedDate: DateComponents?
+    @State private var sessionsByDay: [DateComponents: [SyncSessionLog]]
 
     private let calendar = Calendar.current
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
 
-    /// Computed synchronously from sessions so dots render on the very first frame
-    /// (no lag during tab transition animations)
-    private var sessionsByDay: [DateComponents: [SyncSessionLog]] {
+    private static let monthYearFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM yyyy"
+        return f
+    }()
+
+    init(sessions: [SyncSessionLog]) {
+        self.sessions = sessions
+        self._sessionsByDay = State(initialValue: Self.computeSessionsByDay(sessions: sessions))
+    }
+
+    private static func computeSessionsByDay(sessions: [SyncSessionLog]) -> [DateComponents: [SyncSessionLog]] {
+        let cal = Calendar.current
         var dict: [DateComponents: [SyncSessionLog]] = [:]
         for session in sessions {
             guard let date = Date.fromISO8601(session.date) else { continue }
-            let dc = calendar.dateComponents([.year, .month, .day], from: date)
+            let dc = cal.dateComponents([.year, .month, .day], from: date)
             dict[dc, default: []].append(session)
         }
         return dict
@@ -66,6 +77,9 @@ struct CalendarHistoryView: View {
                 }
             }
         }
+        .onChange(of: sessions.count) { _, _ in
+            sessionsByDay = Self.computeSessionsByDay(sessions: sessions)
+        }
     }
 
     // MARK: - Month Header
@@ -83,7 +97,7 @@ struct CalendarHistoryView: View {
 
             Spacer()
 
-            Text(monthYearString)
+            Text(Self.monthYearFormatter.string(from: displayedMonth))
                 .font(.headline)
 
             Spacer()
@@ -195,12 +209,6 @@ struct CalendarHistoryView: View {
     }
 
     // MARK: - Helpers
-
-    private var monthYearString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: displayedMonth)
-    }
 
     private func changeMonth(by value: Int) {
         if let newMonth = calendar.date(byAdding: .month, value: value, to: displayedMonth) {

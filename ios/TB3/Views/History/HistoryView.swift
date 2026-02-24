@@ -6,6 +6,8 @@ struct HistoryView: View {
     @Environment(AppState.self) var appState
     var stravaService: StravaService?
     @State private var selectedTab = 0
+    @State private var sortedSessions: [SyncSessionLog] = []
+    @State private var groupedMaxTests: [(lift: LiftName, tests: [SyncOneRepMaxTest])] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -33,17 +35,42 @@ struct HistoryView: View {
             }
         }
         .background(Color.tb3Background)
+        .onAppear {
+            recomputeSortedSessions()
+            recomputeGroupedMaxTests()
+        }
+        .onChange(of: appState.sessionHistory.count) { _, _ in
+            recomputeSortedSessions()
+        }
+        .onChange(of: appState.maxTestHistory.count) { _, _ in
+            recomputeGroupedMaxTests()
+        }
+    }
+
+    private func recomputeSortedSessions() {
+        sortedSessions = appState.sessionHistory.sorted { $0.date > $1.date }
+    }
+
+    private func recomputeGroupedMaxTests() {
+        var dict: [String: [SyncOneRepMaxTest]] = [:]
+        for test in appState.maxTestHistory {
+            dict[test.liftName, default: []].append(test)
+        }
+        groupedMaxTests = LiftName.allCases.compactMap { lift in
+            guard let tests = dict[lift.rawValue], !tests.isEmpty else { return nil }
+            return (lift: lift, tests: tests.sorted { $0.date > $1.date })
+        }
     }
 
     // MARK: - Sessions
 
     private var sessionList: some View {
         Group {
-            if appState.sessionHistory.isEmpty {
+            if sortedSessions.isEmpty {
                 emptyState("No sessions yet", icon: "figure.strengthtraining.traditional")
             } else {
                 List {
-                    ForEach(appState.sessionHistory.sorted(by: { $0.date > $1.date }), id: \.id) { session in
+                    ForEach(sortedSessions, id: \.id) { session in
                         SessionLogRow(session: session, stravaService: stravaService, stravaConnected: appState.stravaState.isConnected)
                     }
                 }
@@ -56,32 +83,26 @@ struct HistoryView: View {
 
     private var maxTestList: some View {
         Group {
-            if appState.maxTestHistory.isEmpty {
+            if groupedMaxTests.isEmpty {
                 emptyState("No max tests yet", icon: "chart.line.uptrend.xyaxis")
             } else {
                 List {
-                    ForEach(LiftName.allCases, id: \.rawValue) { lift in
-                        let tests = appState.maxTestHistory
-                            .filter { $0.liftName == lift.rawValue }
-                            .sorted { $0.date > $1.date }
-
-                        if !tests.isEmpty {
-                            Section(lift.displayName) {
-                                ForEach(tests, id: \.id) { test in
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text("\(Int(test.weight)) lb \u{00D7} \(test.reps) reps")
-                                                .font(.subheadline)
-                                            Text("1RM: \(Int(test.calculatedMax)) lb (\(test.maxType))")
-                                                .font(.caption)
-                                                .foregroundStyle(Color.tb3Muted)
-                                        }
-                                        Spacer()
-                                        if let date = Date.fromISO8601(test.date) {
-                                            Text(date.shortDisplay)
-                                                .font(.caption)
-                                                .foregroundStyle(Color.tb3Disabled)
-                                        }
+                    ForEach(groupedMaxTests, id: \.lift.rawValue) { group in
+                        Section(group.lift.displayName) {
+                            ForEach(group.tests, id: \.id) { test in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(Int(test.weight)) lb \u{00D7} \(test.reps) reps")
+                                            .font(.subheadline)
+                                        Text("1RM: \(Int(test.calculatedMax)) lb (\(test.maxType))")
+                                            .font(.caption)
+                                            .foregroundStyle(Color.tb3Muted)
+                                    }
+                                    Spacer()
+                                    if let date = Date.fromISO8601(test.date) {
+                                        Text(date.shortDisplay)
+                                            .font(.caption)
+                                            .foregroundStyle(Color.tb3Disabled)
                                     }
                                 }
                             }

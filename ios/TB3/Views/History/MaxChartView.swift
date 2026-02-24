@@ -7,6 +7,15 @@ struct MaxChartView: View {
     let maxTests: [SyncOneRepMaxTest]
 
     @State private var selectedLift: String?
+    @State private var cachedAvailableLifts: [String] = []
+    @State private var cachedFilteredTests: [SyncOneRepMaxTest] = []
+
+    init(maxTests: [SyncOneRepMaxTest]) {
+        self.maxTests = maxTests
+        let lifts = Array(Set(maxTests.map(\.liftName))).sorted()
+        self._cachedAvailableLifts = State(initialValue: lifts)
+        self._cachedFilteredTests = State(initialValue: maxTests.sorted { $0.date < $1.date })
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -14,14 +23,14 @@ struct MaxChartView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     filterButton(nil, label: "All")
-                    ForEach(availableLifts, id: \.self) { lift in
+                    ForEach(cachedAvailableLifts, id: \.self) { lift in
                         filterButton(lift, label: LiftName(rawValue: lift)?.displayName ?? lift)
                     }
                 }
                 .padding(.horizontal)
             }
 
-            if filteredTests.isEmpty {
+            if cachedFilteredTests.isEmpty {
                 VStack(spacing: 12) {
                     Spacer()
                     Image(systemName: "chart.line.uptrend.xyaxis")
@@ -34,7 +43,7 @@ struct MaxChartView: View {
                 }
             } else {
                 Chart {
-                    ForEach(filteredTests, id: \.id) { test in
+                    ForEach(cachedFilteredTests, id: \.id) { test in
                         if let date = Date.fromISO8601(test.date) {
                             LineMark(
                                 x: .value("Date", date),
@@ -56,20 +65,21 @@ struct MaxChartView: View {
                 .padding(.horizontal)
             }
         }
+        .onChange(of: selectedLift) { _, _ in recomputeFilteredTests() }
+        .onChange(of: maxTests.count) { _, _ in
+            cachedAvailableLifts = Array(Set(maxTests.map(\.liftName))).sorted()
+            recomputeFilteredTests()
+        }
     }
 
-    private var availableLifts: [String] {
-        Array(Set(maxTests.map(\.liftName))).sorted()
-    }
-
-    private var filteredTests: [SyncOneRepMaxTest] {
+    private func recomputeFilteredTests() {
         let tests: [SyncOneRepMaxTest]
         if let lift = selectedLift {
             tests = maxTests.filter { $0.liftName == lift }
         } else {
             tests = maxTests
         }
-        return tests.sorted { $0.date < $1.date }
+        cachedFilteredTests = tests.sorted { $0.date < $1.date }
     }
 
     private func filterButton(_ lift: String?, label: String) -> some View {

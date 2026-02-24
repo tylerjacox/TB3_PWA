@@ -83,7 +83,9 @@ struct WeightRepsPicker: View {
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(repsValue > 1 ? Color.tb3Accent : Color.tb3Disabled)
                             .frame(width: 44, height: 48)
+                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Decrease reps")
 
                     Text(repsValue > 0 ? "\(repsValue)" : "—")
@@ -115,7 +117,9 @@ struct WeightRepsPicker: View {
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(repsValue < 20 ? Color.tb3Accent : Color.tb3Disabled)
                             .frame(width: 44, height: 48)
+                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Increase reps")
                 }
                 .background(Color.tb3Card)

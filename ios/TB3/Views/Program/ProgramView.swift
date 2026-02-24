@@ -299,7 +299,7 @@ struct ProgramView: View {
             }
         }
 
-        let dateStr = ISO8601DateFormatter().string(from: Date())
+        let dateStr = Date.iso8601Now()
         let program = dataStore.createActiveProgram(
             templateId: templateId,
             startDate: dateStr,

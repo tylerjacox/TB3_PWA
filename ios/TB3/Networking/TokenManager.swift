@@ -34,7 +34,7 @@ actor TokenManager {
         if let data = try? JSONEncoder().encode(tokens) {
             try? Keychain.save(key: Self.tokensKey, data: data)
         }
-        try? Keychain.saveString(key: Self.lastAuthKey, value: ISO8601DateFormatter().string(from: Date()))
+        try? Keychain.saveString(key: Self.lastAuthKey, value: Date.iso8601Now())
     }
 
     func getStoredTokens() -> StoredTokens? {

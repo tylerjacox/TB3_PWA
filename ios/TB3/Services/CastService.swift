@@ -26,6 +26,10 @@ final class CastService {
     // Periodic sync timer — keeps Cast receiver in sync during active timer phases
     private var syncTimer: Timer?
 
+    // State version for deduplication — incremented on meaningful state changes
+    private var stateVersion: Int = 0
+    private var lastSyncedVersion: Int = -1
+
     // Closure to fetch current session state for periodic sync (set by app at init)
     var stateProvider: (() -> ActiveSessionState?)?
 
@@ -69,18 +73,23 @@ final class CastService {
     /// Send current workout state to Cast receiver.
     /// Debounced to prevent rapid message flooding during set completion.
     func sendSessionState(_ state: ActiveSessionState?) {
+        stateVersion += 1
         debounceTimer?.invalidate()
         debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.sendMessageImmediate(state)
-                self?.updateSyncTimer(hasTimer: state?.timerState != nil)
+                guard let self else { return }
+                self.sendMessageImmediate(state)
+                self.lastSyncedVersion = self.stateVersion
+                self.updateSyncTimer(hasTimer: state?.timerState != nil)
             }
         }
     }
 
     /// Send immediately (for initial connection, no debounce)
     func sendSessionStateImmediate(_ state: ActiveSessionState?) {
+        stateVersion += 1
         sendMessageImmediate(state)
+        lastSyncedVersion = stateVersion
         updateSyncTimer(hasTimer: state?.timerState != nil)
     }
 
@@ -92,18 +101,42 @@ final class CastService {
             syncTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
                 Task { @MainActor [weak self] in
                     guard let self else { return }
-                    guard let state = self.stateProvider?(), state.timerState != nil else {
+                    guard let state = self.stateProvider?(), let timer = state.timerState else {
                         self.syncTimer?.invalidate()
                         self.syncTimer = nil
                         return
                     }
-                    self.sendMessageImmediate(state)
+                    if self.stateVersion == self.lastSyncedVersion {
+                        // State unchanged — send lightweight timer update only
+                        self.sendTimerOnlyUpdate(timer: timer)
+                    } else {
+                        self.sendMessageImmediate(state)
+                        self.lastSyncedVersion = self.stateVersion
+                    }
                 }
             }
         } else {
             syncTimer?.invalidate()
             syncTimer = nil
         }
+    }
+
+    private func sendTimerOnlyUpdate(timer: TimerState) {
+        guard let castSession, castState.connected else { return }
+        let serverTimeNow = Date().timeIntervalSince1970 * 1000
+        let payload: [String: Any] = [
+            "timerUpdate": true,
+            "timer": [
+                "phase": timer.phase.rawValue,
+                "startedAt": timer.startedAt,
+                "restDurationSeconds": timer.restDurationSeconds as Any,
+                "elapsedMs": max(0, serverTimeNow - timer.startedAt),
+                "serverTimeNow": serverTimeNow,
+            ] as [String: Any],
+        ]
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload),
+              let jsonString = String(data: jsonData, encoding: .utf8) else { return }
+        try? castSession.sendMessage(jsonString, namespace: namespace)
     }
 
     private func sendMessageImmediate(_ state: ActiveSessionState?) {

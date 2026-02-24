@@ -111,6 +111,7 @@ final class OnboardingViewModel {
             appState.maxTestHistory.append(test)
             dataStore.addMaxTest(test)
         }
+        appState.recomputeCurrentLifts()
     }
 
     // MARK: - Step 2: Lift Selection
@@ -142,7 +143,7 @@ final class OnboardingViewModel {
 
         let program = SyncActiveProgram(
             templateId: template.id.rawValue,
-            startDate: ISO8601DateFormatter().string(from: startDate),
+            startDate: startDate.iso8601,
             currentWeek: 1,
             currentSession: 1,
             liftSelections: resolvedSelections,
@@ -162,7 +163,7 @@ final class OnboardingViewModel {
         guard let template = selectedTemplate else { return }
 
         let resolvedSelections = resolveLiftSelections(template: template)
-        let dateStr = ISO8601DateFormatter().string(from: startDate)
+        let dateStr = startDate.iso8601
 
         let program = dataStore.createActiveProgram(
             templateId: template.id.rawValue,

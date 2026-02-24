@@ -31,7 +31,7 @@ final class AppState {
         plateInventoryBelt: DEFAULT_PLATE_INVENTORY_BELT,
         restTimerDefault: 120, soundMode: "on", voiceAnnouncements: false,
         voiceName: nil, theme: "dark", unit: "lb",
-        lastModified: ISO8601DateFormatter().string(from: Date())
+        lastModified: Date.iso8601Now()
     )
     var activeProgram: SyncActiveProgram?
     var computedSchedule: ComputedSchedule?
@@ -44,11 +44,11 @@ final class AppState {
     // Navigation
     var isSessionPresented = false
 
-    // MARK: - Derived State
+    // MARK: - Derived State (cached — call recomputeCurrentLifts() when maxTestHistory or profile.maxType changes)
 
-    /// Current lifts derived from maxTestHistory (mirrors state.ts currentLifts computed)
-    var currentLifts: [DerivedLiftEntry] {
-        // Group by liftName, take most recent test per lift
+    var currentLifts: [DerivedLiftEntry] = []
+
+    func recomputeCurrentLifts() {
         var latestByLift: [String: SyncOneRepMaxTest] = [:]
         for test in maxTestHistory {
             if let existing = latestByLift[test.liftName] {
@@ -60,7 +60,7 @@ final class AppState {
             }
         }
 
-        return latestByLift.values.map { test in
+        currentLifts = latestByLift.values.map { test in
             let oneRepMax = OneRepMaxCalculator.calculateOneRepMax(weight: test.weight, reps: test.reps)
             let workingMax: Double
             if profile.maxType == "training" {
@@ -117,6 +117,7 @@ final class AppState {
         sessionHistory = store.loadSessionHistory().map { $0.toSyncSessionLog() }
         maxTestHistory = store.loadMaxTestHistory().map { $0.toSyncOneRepMaxTest() }
 
+        recomputeCurrentLifts()
         regenerateScheduleIfNeeded()
     }
 
@@ -137,6 +138,7 @@ final class AppState {
         activeSession = ActiveSessionState.load()
         lastSyncedAt = UserDefaults.standard.string(forKey: "tb3_last_synced_at")
 
+        recomputeCurrentLifts()
         regenerateScheduleIfNeeded()
         isLoading = false
     }

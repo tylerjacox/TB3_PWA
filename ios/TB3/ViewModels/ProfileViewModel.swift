@@ -75,6 +75,7 @@ final class ProfileViewModel {
 
         appState.maxTestHistory.append(test)
         dataStore.addMaxTest(test)
+        appState.recomputeCurrentLifts()
         appState.regenerateScheduleIfNeeded()
 
         // Refresh widgets (Lift PRs + Next Workout weights)
@@ -90,6 +91,7 @@ final class ProfileViewModel {
     func updateMaxType(_ value: String) {
         appState.profile.maxType = value
         saveProfile()
+        appState.recomputeCurrentLifts()
         appState.regenerateScheduleIfNeeded()
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -210,6 +212,7 @@ final class ProfileViewModel {
         appState.activeSession = nil
         appState.sessionHistory = []
         appState.maxTestHistory = []
+        appState.recomputeCurrentLifts()
         appState.isFirstLaunch = true
     }
 

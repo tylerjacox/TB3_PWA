@@ -207,6 +207,8 @@ button:disabled {
   padding: 12px;
   -webkit-appearance: none;
   appearance: none;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .field input:focus,

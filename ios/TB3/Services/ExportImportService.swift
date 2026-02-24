@@ -15,7 +15,7 @@ struct ExportImportService {
     ) -> Data? {
         let exported = ExportedAppData(
             tb3_export: true,
-            exportedAt: ISO8601DateFormatter().string(from: Date()),
+            exportedAt: Date.iso8601Now(),
             appVersion: "1.0.0", // iOS app version
             schemaVersion: CURRENT_SCHEMA_VERSION,
             profile: profile,

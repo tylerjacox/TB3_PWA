@@ -14,7 +14,7 @@ enum ScheduleGenerator {
         guard let templateId = TemplateId(rawValue: program.templateId),
               let template = Templates.get(id: templateId) else {
             return ComputedSchedule(
-                computedAt: ISO8601DateFormatter().string(from: Date()),
+                computedAt: Date.iso8601Now(),
                 sourceHash: "",
                 weeks: []
             )
@@ -109,7 +109,7 @@ enum ScheduleGenerator {
         }
 
         return ComputedSchedule(
-            computedAt: ISO8601DateFormatter().string(from: Date()),
+            computedAt: Date.iso8601Now(),
             sourceHash: computeSourceHash(program: program, lifts: lifts, profile: profile),
             weeks: weeks
         )

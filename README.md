@@ -125,6 +125,18 @@ Widgets share data via App Group container and refresh on set completion, 1RM te
 
 Ambient temperature is fetched via Apple WeatherKit when a workout starts and attached to the session. Displayed on the Chromecast header during the workout and included in Strava activity descriptions. Uses coarse location (kilometer accuracy) — no GPS tracking.
 
+### Performance (iOS)
+
+Aggressive caching throughout the `@Observable` architecture to avoid redundant computation on every SwiftUI body evaluation:
+
+- **Cached derived state** — `currentLifts` converted from computed to stored property with explicit recomputation at mutation points, eliminating O(n) grouping + 1RM calculation on every view access
+- **Pre-sorted history lists** — Session and max test lists sorted once on data change via `@State` + `.onChange`, not on every render
+- **Cached DateFormatters** — Static shared formatters replace per-render `ISO8601DateFormatter()` and `DateFormatter()` allocations across 10+ files
+- **Cached ModelContainer** — `IntentDataProvider` reuses a single `ModelContainer` for Siri intent queries instead of creating one per method call
+- **Persistent ViewModels** — `ProfileViewModel` created once at startup and reused across tab switches
+- **Cast payload deduplication** — Sync timer sends lightweight timer-only JSON when workout state hasn't changed, avoiding full payload rebuild every 5 seconds
+- **SwiftData predicate queries** — Sync push fetches only modified records via `#Predicate` instead of loading all records and filtering in memory
+
 ### Additional Features
 
 - **1RM Calculator** — Epley formula with training max (90%), percentage tables at 65-100%

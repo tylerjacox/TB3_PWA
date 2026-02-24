@@ -21,7 +21,7 @@ final class PersistedProfile {
     var lastModified: String = ""
 
     init() {
-        let now = ISO8601DateFormatter().string(from: Date())
+        let now = Date.iso8601Now()
         self.lastModified = now
         self.plateInventoryBarbellData = (try? JSONEncoder().encode(DEFAULT_PLATE_INVENTORY_BARBELL)) ?? Data()
         self.plateInventoryBeltData = (try? JSONEncoder().encode(DEFAULT_PLATE_INVENTORY_BELT)) ?? Data()

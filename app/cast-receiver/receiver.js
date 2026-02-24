@@ -145,6 +145,8 @@
       var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if (data.idle) {
         showIdle();
+      } else if (data.timerUpdate && data.timer) {
+        handleTimerUpdate(data.timer);
       } else {
         renderWorkout(data);
       }
@@ -166,6 +168,22 @@
     currentTimerPhase = null;
     currentTimerStartedAt = null;
     stopTimer();
+  }
+
+  function handleTimerUpdate(timer) {
+    // Lightweight timer-only sync — just correct drift without full re-render
+    if (timer && timer.phase && timer.elapsedMs !== undefined) {
+      var newStartedAt = Date.now() - timer.elapsedMs;
+      if (timer.phase !== currentTimerPhase ||
+          currentTimerStartedAt === null ||
+          Math.abs(newStartedAt - currentTimerStartedAt) > 1000) {
+        timer.startedAt = newStartedAt;
+        currentTimerPhase = timer.phase;
+        currentTimerStartedAt = newStartedAt;
+        clockOffset = 0;
+        updateTimer(timer);
+      }
+    }
   }
 
   function renderWorkout(d) {

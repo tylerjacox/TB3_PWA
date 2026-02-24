@@ -20,7 +20,7 @@ final class PersistedActiveProgram {
         self.currentWeek = 1
         self.currentSession = 1
         self.liftSelectionsData = (try? JSONEncoder().encode(liftSelections)) ?? Data()
-        self.lastModified = ISO8601DateFormatter().string(from: Date())
+        self.lastModified = Date.iso8601Now()
     }
 
     // MARK: - LiftSelections accessor

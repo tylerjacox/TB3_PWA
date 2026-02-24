@@ -25,7 +25,7 @@ final class DataStore {
     }
 
     func saveProfile(_ profile: PersistedProfile) {
-        profile.lastModified = ISO8601DateFormatter().string(from: Date())
+        profile.lastModified = Date.iso8601Now()
         try? modelContext.save()
     }
 
@@ -37,7 +37,7 @@ final class DataStore {
     }
 
     func saveActiveProgram(_ program: PersistedActiveProgram) {
-        program.lastModified = ISO8601DateFormatter().string(from: Date())
+        program.lastModified = Date.iso8601Now()
         try? modelContext.save()
     }
 
@@ -105,19 +105,12 @@ final class DataStore {
             syncProgram = programModified * 1000 > sinceMs ? program.toSyncActiveProgram() : nil
         }
 
-        // Sessions: push if modified since
-        let allSessions = loadSessionHistory()
-        let newSessions = allSessions.filter { session in
-            guard let modified = Date.fromISO8601(session.lastModified) else { return false }
-            return modified.timeIntervalSince1970 * 1000 > sinceMs
-        }.map { $0.toSyncSessionLog() }
+        // Sessions: push if modified since (ISO8601 strings are lexicographically ordered)
+        let sinceStr = since ?? ""
+        let newSessions = loadSessionsModifiedSince(sinceStr).map { $0.toSyncSessionLog() }
 
         // Max tests: push if modified since
-        let allTests = loadMaxTestHistory()
-        let newMaxTests = allTests.filter { test in
-            guard let modified = Date.fromISO8601(test.lastModified) else { return false }
-            return modified.timeIntervalSince1970 * 1000 > sinceMs
-        }.map { $0.toSyncOneRepMaxTest() }
+        let newMaxTests = loadMaxTestsModifiedSince(sinceStr).map { $0.toSyncOneRepMaxTest() }
 
         return SyncPushPayload(
             profile: syncProfile,
@@ -125,6 +118,22 @@ final class DataStore {
             newSessions: newSessions,
             newMaxTests: newMaxTests
         )
+    }
+
+    private func loadSessionsModifiedSince(_ since: String) -> [PersistedSessionLog] {
+        if since.isEmpty { return loadSessionHistory() }
+        let descriptor = FetchDescriptor<PersistedSessionLog>(
+            predicate: #Predicate { $0.lastModified > since }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private func loadMaxTestsModifiedSince(_ since: String) -> [PersistedOneRepMaxTest] {
+        if since.isEmpty { return loadMaxTestHistory() }
+        let descriptor = FetchDescriptor<PersistedOneRepMaxTest>(
+            predicate: #Predicate { $0.lastModified > since }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
     }
 
     // MARK: - Sync Integration: Apply Remote Changes
