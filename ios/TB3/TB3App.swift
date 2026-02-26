@@ -55,6 +55,8 @@ struct RootView: View {
     @State private var stravaService: StravaService?
     @State private var spotifyService: SpotifyService?
     @State private var notificationService = NotificationService()
+    @State private var calendarService: CalendarService?
+    @State private var sessionViewModel: SessionViewModel?
     @State private var selectedTab = 0
     @State private var tabDirection: TabDirection = .none
     @State private var profileViewModel: ProfileViewModel?
@@ -89,18 +91,32 @@ struct RootView: View {
             get: { appState.isSessionPresented },
             set: { appState.isSessionPresented = $0 }
         )) {
-            if let dataStore {
-                SessionView(vm: SessionViewModel(
-                    appState: appState,
-                    dataStore: dataStore,
-                    feedback: feedbackService,
-                    castService: castService,
-                    stravaService: stravaService,
-                    spotifyService: spotifyService,
-                    liveActivityService: liveActivityService,
-                    notificationService: notificationService
-                ))
-                .environment(appState)
+            Group {
+                if let vm = sessionViewModel {
+                    SessionView(vm: vm)
+                }
+            }
+            .environment(appState)
+            .onAppear {
+                // Create VM for resumed sessions (notification tap, intent resume, app relaunch)
+                if sessionViewModel == nil, let dataStore {
+                    sessionViewModel = SessionViewModel(
+                        appState: appState,
+                        dataStore: dataStore,
+                        feedback: feedbackService,
+                        castService: castService,
+                        stravaService: stravaService,
+                        spotifyService: spotifyService,
+                        liveActivityService: liveActivityService,
+                        notificationService: notificationService,
+                        calendarService: calendarService
+                    )
+                }
+            }
+        }
+        .onChange(of: appState.isSessionPresented) { _, isPresented in
+            if !isPresented {
+                sessionViewModel = nil
             }
         }
         .tint(Color.tb3Accent)
@@ -150,6 +166,24 @@ struct RootView: View {
             if newVal == nil && oldVal != nil {
                 castService?.sendSessionState(nil)
                 liveActivityService.endActivity()
+            }
+        }
+        .onChange(of: appState.activeProgram) { _, newProgram in
+            // Reschedule calendar events when program changes (new selection or sync)
+            guard appState.calendarState.isConnected,
+                  appState.calendarState.scheduleFutureWorkouts,
+                  let cal = calendarService else { return }
+            if let program = newProgram,
+               let template = Templates.get(id: program.templateId),
+               let schedule = appState.computedSchedule {
+                cal.scheduleFutureSessions(
+                    program: program,
+                    template: template,
+                    schedule: schedule,
+                    sessionHistory: appState.sessionHistory
+                )
+            } else {
+                cal.removeFutureEvents()
             }
         }
     }
@@ -223,8 +257,9 @@ struct RootView: View {
                 onNavigateToProfile: { selectedTab = 3 },
                 onStartWorkout: { exercises, week, program in
                     if let dataStore {
-                        let sessionVM = SessionViewModel(appState: appState, dataStore: dataStore, feedback: feedbackService, castService: castService, stravaService: stravaService, spotifyService: spotifyService, liveActivityService: liveActivityService, notificationService: notificationService)
-                        sessionVM.startSession(exercises: exercises, week: week, program: program)
+                        let vm = SessionViewModel(appState: appState, dataStore: dataStore, feedback: feedbackService, castService: castService, stravaService: stravaService, spotifyService: spotifyService, liveActivityService: liveActivityService, notificationService: notificationService, calendarService: calendarService)
+                        vm.startSession(exercises: exercises, week: week, program: program)
+                        sessionViewModel = vm
                     }
                 }
             )
@@ -236,7 +271,7 @@ struct RootView: View {
             HistoryView(stravaService: stravaService)
         case 3:
             if let vm = profileViewModel {
-                ProfileView(vm: vm, stravaService: stravaService, spotifyService: spotifyService, notificationService: notificationService)
+                ProfileView(vm: vm, stravaService: stravaService, spotifyService: spotifyService, notificationService: notificationService, calendarService: calendarService)
             }
         default:
             EmptyView()
@@ -319,6 +354,24 @@ struct RootView: View {
             spotify.startPolling()
         }
 
+        // Calendar setup
+        let calendar = CalendarService(calendarState: appState.calendarState)
+        calendar.restoreConnection()
+        self.calendarService = calendar
+
+        // Schedule future calendar events if connected + toggle on
+        if appState.calendarState.isConnected && appState.calendarState.scheduleFutureWorkouts,
+           let program = appState.activeProgram,
+           let template = Templates.get(id: program.templateId),
+           let schedule = appState.computedSchedule {
+            calendar.scheduleFutureSessions(
+                program: program,
+                template: template,
+                schedule: schedule,
+                sessionHistory: appState.sessionHistory
+            )
+        }
+
         // Initialize auth (check stored tokens, refresh)
         await auth.initAuth()
 
@@ -345,32 +398,34 @@ struct RootView: View {
 
     private func scheduleWorkoutRemindersFromCurrentProgram() {
         guard let program = appState.activeProgram,
-              let template = Templates.get(id: program.templateId),
-              let schedule = appState.computedSchedule else {
-            notificationService.cancelWorkoutReminders()
+              let template = Templates.get(id: program.templateId) else {
+            notificationService.cancelTrainingNotifications()
             return
         }
 
-        let weekIndex = program.currentWeek - 1
-        let sessionIndex = program.currentSession - 1
-        guard weekIndex >= 0, weekIndex < schedule.weeks.count else {
-            notificationService.cancelWorkoutReminders()
-            return
-        }
-        let week = schedule.weeks[weekIndex]
-        guard sessionIndex >= 0, sessionIndex < week.sessions.count else {
-            notificationService.cancelWorkoutReminders()
-            return
-        }
-        let session = week.sessions[sessionIndex]
-        let exerciseNames = session.exercises.map {
-            LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
+        let trainingStatus = TrainingDayCalculator.status(
+            program: program,
+            template: template,
+            sessionHistory: appState.sessionHistory
+        )
+
+        // Gather exercise names for the next session (if applicable)
+        var exerciseNames: [String] = []
+        if program.currentWeek <= template.durationWeeks,
+           let schedule = appState.computedSchedule {
+            let weekIndex = program.currentWeek - 1
+            let sessionIndex = program.currentSession - 1
+            if weekIndex >= 0, weekIndex < schedule.weeks.count,
+               sessionIndex >= 0, sessionIndex < schedule.weeks[weekIndex].sessions.count {
+                exerciseNames = schedule.weeks[weekIndex].sessions[sessionIndex].exercises.map {
+                    LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
+                }
+            }
         }
 
-        notificationService.scheduleWorkoutReminders(
+        notificationService.scheduleTrainingNotifications(
+            status: trainingStatus,
             templateName: template.name,
-            weekNumber: program.currentWeek,
-            sessionNumber: program.currentSession,
             exercises: exerciseNames
         )
     }
@@ -405,7 +460,7 @@ struct RootView: View {
             guard sessionIndex >= 0, sessionIndex < week.sessions.count else { return }
             let session = week.sessions[sessionIndex]
 
-            let sessionVM = SessionViewModel(
+            let vm = SessionViewModel(
                 appState: appState,
                 dataStore: dataStore,
                 feedback: feedbackService,
@@ -413,9 +468,11 @@ struct RootView: View {
                 stravaService: stravaService,
                 spotifyService: spotifyService,
                 liveActivityService: liveActivityService,
-                notificationService: notificationService
+                notificationService: notificationService,
+                calendarService: calendarService
             )
-            sessionVM.startSession(exercises: session.exercises, week: week, program: program)
+            vm.startSession(exercises: session.exercises, week: week, program: program)
+            sessionViewModel = vm
         }
 
         // Resume existing workout from Siri intent

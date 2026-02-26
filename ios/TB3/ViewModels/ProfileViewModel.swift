@@ -137,25 +137,31 @@ final class ProfileViewModel {
                 let granted = await notificationService.requestPermission()
                 guard granted else { return }
 
-                // Schedule with current next workout info
+                // Schedule training-aware notifications (rest day / workout day / deload)
                 if let program = appState.activeProgram,
-                   let template = Templates.get(id: program.templateId),
-                   let schedule = appState.computedSchedule {
-                    let weekIndex = program.currentWeek - 1
-                    let sessionIndex = program.currentSession - 1
-                    if weekIndex >= 0, weekIndex < schedule.weeks.count,
-                       sessionIndex >= 0, sessionIndex < schedule.weeks[weekIndex].sessions.count {
-                        let session = schedule.weeks[weekIndex].sessions[sessionIndex]
-                        let exerciseNames = session.exercises.map {
-                            LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
+                   let template = Templates.get(id: program.templateId) {
+                    let trainingStatus = TrainingDayCalculator.status(
+                        program: program,
+                        template: template,
+                        sessionHistory: appState.sessionHistory
+                    )
+                    var exerciseNames: [String] = []
+                    if program.currentWeek <= template.durationWeeks,
+                       let schedule = appState.computedSchedule {
+                        let weekIndex = program.currentWeek - 1
+                        let sessionIndex = program.currentSession - 1
+                        if weekIndex >= 0, weekIndex < schedule.weeks.count,
+                           sessionIndex >= 0, sessionIndex < schedule.weeks[weekIndex].sessions.count {
+                            exerciseNames = schedule.weeks[weekIndex].sessions[sessionIndex].exercises.map {
+                                LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
+                            }
                         }
-                        notificationService.scheduleWorkoutReminders(
-                            templateName: template.name,
-                            weekNumber: program.currentWeek,
-                            sessionNumber: program.currentSession,
-                            exercises: exerciseNames
-                        )
                     }
+                    notificationService.scheduleTrainingNotifications(
+                        status: trainingStatus,
+                        templateName: template.name,
+                        exercises: exerciseNames
+                    )
                 }
             } else {
                 notificationService.cancelWorkoutReminders()

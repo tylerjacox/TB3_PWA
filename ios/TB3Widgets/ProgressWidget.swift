@@ -35,12 +35,27 @@ struct ProgressProvider: TimelineProvider {
 
             // Clamp week to valid range
             let currentWeek = min(program.currentWeek, template.durationWeeks)
-            let isComplete = program.currentWeek > template.durationWeeks
+            let isPastDuration = program.currentWeek > template.durationWeeks
+
+            // Detect deload vs complete
+            var isDeload = false
+            var deloadDaysRemaining = 0
+            if isPastDuration, let deloadStart = program.deloadStartDate,
+               let startDate = Date.fromISO8601(deloadStart) {
+                let calendar = Calendar.current
+                let deloadEnd = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: startDate))!
+                if calendar.startOfDay(for: Date()) < deloadEnd {
+                    isDeload = true
+                    deloadDaysRemaining = TrainingDayCalculator.daysRemainingInDeload(endsDate: deloadEnd)
+                }
+            }
+
+            let isComplete = isPastDuration && !isDeload
 
             // Calculate total sessions completed
             let totalSessions = template.durationWeeks * template.sessionsPerWeek
             let completedSessions: Int
-            if isComplete {
+            if isPastDuration {
                 completedSessions = totalSessions
             } else {
                 completedSessions = (program.currentWeek - 1) * template.sessionsPerWeek + (program.currentSession - 1)
@@ -55,7 +70,9 @@ struct ProgressProvider: TimelineProvider {
                 currentSession: program.currentSession,
                 sessionsPerWeek: template.sessionsPerWeek,
                 progress: progress,
-                isComplete: isComplete
+                isComplete: isComplete,
+                isDeload: isDeload,
+                deloadDaysRemaining: deloadDaysRemaining
             )
         } catch {
             return nil
@@ -78,6 +95,8 @@ struct WidgetProgressInfo: Sendable {
     let sessionsPerWeek: Int
     let progress: Double
     let isComplete: Bool
+    let isDeload: Bool
+    let deloadDaysRemaining: Int
 
     static let placeholder = WidgetProgressInfo(
         templateName: "Operator",
@@ -86,7 +105,9 @@ struct WidgetProgressInfo: Sendable {
         currentSession: 2,
         sessionsPerWeek: 3,
         progress: 0.39,
-        isComplete: false
+        isComplete: false,
+        isDeload: false,
+        deloadDaysRemaining: 0
     )
 }
 
@@ -123,6 +144,10 @@ struct ProgressSmallView: View {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundStyle(Color.tb3Success)
+                        } else if info.isDeload {
+                            Image(systemName: "figure.mind.and.body")
+                                .font(.system(size: 18))
+                                .foregroundStyle(Color.tb3Accent)
                         } else {
                             Text("W\(info.currentWeek)")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -138,6 +163,10 @@ struct ProgressSmallView: View {
                     Text("Complete!")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(Color.tb3Success)
+                } else if info.isDeload {
+                    Text("Deload \u{00B7} \(info.deloadDaysRemaining)d left")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.tb3Accent)
                 } else {
                     Text("of \(info.totalWeeks) weeks")
                         .font(.system(size: 12))
@@ -176,6 +205,9 @@ struct ProgressAccessoryView: View {
                 if info.isComplete {
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .bold))
+                } else if info.isDeload {
+                    Image(systemName: "figure.mind.and.body")
+                        .font(.system(size: 10))
                 } else {
                     Text("W\(info.currentWeek)")
                         .font(.system(size: 10, weight: .bold, design: .rounded))

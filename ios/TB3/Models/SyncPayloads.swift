@@ -40,6 +40,7 @@ struct SyncActiveProgram: Codable, Equatable {
     var currentSession: Int
     var liftSelections: [String: [String]]
     var lastModified: String
+    var deloadStartDate: String?  // ISO 8601, set when program completes
 }
 
 // MARK: - Sync Session Log (mirrors types.ts SessionLog for sync)

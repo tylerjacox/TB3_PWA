@@ -31,6 +31,10 @@
 		<string>_googlecast._tcp</string>
 		<string>_6BA96B8F._googlecast._tcp</string>
 	</array>
+	<key>NSCalendarsUsageDescription</key>
+	<string>TB3 uses your calendar to log completed workouts and optionally schedule upcoming training sessions.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>TB3 uses your calendar to log completed workouts and optionally schedule upcoming training sessions.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>TB3 uses your location to show the current temperature during workouts.</string>
 	<key>LSApplicationQueriesSchemes</key>

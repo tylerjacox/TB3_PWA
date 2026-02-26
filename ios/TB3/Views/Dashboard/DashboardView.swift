@@ -14,12 +14,17 @@ struct DashboardView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    if appState.activeProgram == nil {
+                    switch trainingStatus {
+                    case .noProgram:
                         emptyState
-                    } else if isProgramComplete {
-                        completedState
-                    } else {
+                    case .workoutDay:
                         activeState
+                    case .restDay(let resumeDate, let reason):
+                        restDayState(resumeDate: resumeDate, reason: reason)
+                    case .deloadWeek(let endsDate):
+                        deloadState(endsDate: endsDate)
+                    case .programComplete:
+                        completedState
                     }
                 }
                 .padding(.horizontal, 16)
@@ -87,25 +92,28 @@ struct DashboardView: View {
 
     // MARK: - Active Program
 
+    @ViewBuilder
+    private var programHeader: some View {
+        if let program = appState.activeProgram,
+           let template = Templates.get(id: program.templateId) {
+            VStack(spacing: 8) {
+                Text(template.name)
+                    .font(.title2.bold())
+
+                Text("Week \(min(program.currentWeek, template.durationWeeks)) of \(template.durationWeeks)")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.tb3Muted)
+
+                ProgressView(value: progressPercent)
+                    .tint(Color.tb3Accent)
+                    .accessibilityLabel("Program progress, \(Int(progressPercent * 100))% complete")
+            }
+        }
+    }
+
     private var activeState: some View {
         VStack(spacing: 16) {
-            // Program header
-            if let program = appState.activeProgram,
-               let template = Templates.get(id: program.templateId) {
-                VStack(spacing: 8) {
-                    Text(template.name)
-                        .font(.title2.bold())
-
-                    Text("Week \(program.currentWeek) of \(template.durationWeeks)")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.tb3Muted)
-
-                    // Progress bar
-                    ProgressView(value: progressPercent)
-                        .tint(Color.tb3Accent)
-                        .accessibilityLabel("Program progress, \(Int(progressPercent * 100))% complete")
-                }
-            }
+            programHeader
 
             // Return to workout banner
             if appState.activeSession != nil {
@@ -163,12 +171,119 @@ struct DashboardView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Rest Day State
+
+    private func restDayState(resumeDate: Date, reason: RestReason) -> some View {
+        VStack(spacing: 16) {
+            // Program header (same as active)
+            programHeader
+
+            // Return to workout banner (in case there's an active session)
+            if appState.activeSession != nil {
+                returnToWorkoutBanner
+            }
+
+            // Rest day card
+            VStack(spacing: 12) {
+                Image(systemName: "bed.double.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(Color.tb3Muted)
+
+                Text("Rest Day")
+                    .font(.title2.bold())
+
+                let daysLeft = TrainingDayCalculator.daysUntilNextWorkout(resumeDate: resumeDate)
+                Text(daysLeft <= 1
+                    ? "Back to training tomorrow"
+                    : "Next session in \(daysLeft) days")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.tb3Muted)
+
+                Text(reason == .endOfWeek
+                    ? "Extra recovery between training weeks"
+                    : "Recover before your next session")
+                    .font(.caption)
+                    .foregroundStyle(Color.tb3Disabled)
+            }
+            .padding(.vertical, 8)
+
+            // Next session preview (read-only)
+            if let (session, week) = currentSessionData {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Up Next")
+                        .font(.headline)
+                        .foregroundStyle(Color.tb3Muted)
+
+                    SessionPreviewCard(session: session, week: week)
+                }
+
+                // Train Anyway button (secondary)
+                Button {
+                    if let program = appState.activeProgram {
+                        if appState.activeSession != nil {
+                            appState.isSessionPresented = true
+                        } else {
+                            onStartWorkout?(session.exercises, week, program)
+                        }
+                    }
+                } label: {
+                    Label("Train Anyway", systemImage: "play.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            }
+        }
+    }
+
+    // MARK: - Deload State
+
+    private func deloadState(endsDate: Date) -> some View {
+        VStack(spacing: 20) {
+            Image(systemName: "figure.mind.and.body")
+                .font(.system(size: 60))
+                .foregroundStyle(Color.tb3Accent)
+                .symbolEffect(.pulse, options: .repeating.speed(0.5))
+
+            Text("Deload Week")
+                .font(.title2.bold())
+
+            let daysLeft = TrainingDayCalculator.daysRemainingInDeload(endsDate: endsDate)
+            Text(daysLeft <= 1
+                ? "Recovery period ends tomorrow"
+                : "\(daysLeft) days of recovery remaining")
+                .font(.subheadline)
+                .foregroundStyle(Color.tb3Muted)
+
+            Text("Focus on recovery and mobility.\nRetest your maxes when you're ready.")
+                .font(.subheadline)
+                .foregroundStyle(Color.tb3Disabled)
+                .multilineTextAlignment(.center)
+
+            HStack(spacing: 12) {
+                Button("Retest 1RM") {
+                    onNavigateToProfile()
+                }
+                .buttonStyle(.bordered)
+
+                Button("New Template") {
+                    onNavigateToProgram()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+    }
+
     // MARK: - Computed
 
-    private var isProgramComplete: Bool {
-        guard let program = appState.activeProgram,
-              let template = Templates.get(id: program.templateId) else { return false }
-        return program.currentWeek > template.durationWeeks
+    private var trainingStatus: TrainingDayStatus {
+        guard let program = appState.activeProgram else { return .noProgram }
+        let template = Templates.get(id: program.templateId)
+        return TrainingDayCalculator.status(
+            program: program,
+            template: template,
+            sessionHistory: appState.sessionHistory
+        )
     }
 
     private var progressPercent: Double {

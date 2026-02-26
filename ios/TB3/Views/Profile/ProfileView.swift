@@ -9,12 +9,14 @@ struct ProfileView: View {
     var stravaService: StravaService?
     var spotifyService: SpotifyService?
     var notificationService: NotificationService?
+    var calendarService: CalendarService?
     @State private var showStravaConsent = false
     @State private var showStravaDisconnectConfirm = false
     @State private var shouldConnectStrava = false
     @State private var showSpotifyConsent = false
     @State private var showSpotifyDisconnectConfirm = false
     @State private var shouldConnectSpotify = false
+    @State private var showCalendarDisconnectConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -84,6 +86,13 @@ struct ProfileView: View {
                 .presentationDetents([.medium])
                 .presentationBackground(Color.tb3Background)
             }
+            .confirmDialog(isPresented: $showCalendarDisconnectConfirm, config: ConfirmDialogConfig(
+                title: "Disconnect Calendar?",
+                message: "This will remove the TB3 calendar and all its events from your device.",
+                confirmLabel: "Disconnect",
+                isDanger: true,
+                onConfirm: { calendarService?.disconnect() }
+            ))
             .confirmDialog(isPresented: $showSpotifyDisconnectConfirm, config: ConfirmDialogConfig(
                 title: "Disconnect Spotify?",
                 message: "This will remove the connection. You can reconnect at any time.",
@@ -417,6 +426,70 @@ struct ProfileView: View {
             if appState.spotifyState.isConnected {
                 Button("Disconnect", role: .destructive) {
                     showSpotifyDisconnectConfirm = true
+                }
+            }
+
+            // Calendar
+            HStack {
+                Image(systemName: "calendar")
+                    .foregroundStyle(Color.tb3Accent)
+                    .frame(width: 20)
+                Text("Calendar")
+
+                Spacer()
+
+                if appState.calendarState.isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if appState.calendarState.isConnected {
+                    Text("Connected")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.tb3Success)
+                } else {
+                    Button("Connect") {
+                        Task { await calendarService?.connect() }
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Color.tb3Accent)
+                }
+            }
+
+            if let error = appState.calendarState.lastError {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(Color.tb3Error)
+                }
+            }
+
+            if appState.calendarState.isConnected {
+                Toggle("Schedule Future Workouts", isOn: Binding(
+                    get: { appState.calendarState.scheduleFutureWorkouts },
+                    set: { newValue in
+                        appState.calendarState.scheduleFutureWorkouts = newValue
+                        UserDefaults.standard.set(newValue, forKey: "tb3_calendar_schedule_future")
+                        if newValue {
+                            // Schedule all future sessions
+                            if let program = appState.activeProgram,
+                               let template = Templates.get(id: program.templateId),
+                               let schedule = appState.computedSchedule {
+                                calendarService?.scheduleFutureSessions(
+                                    program: program,
+                                    template: template,
+                                    schedule: schedule,
+                                    sessionHistory: appState.sessionHistory
+                                )
+                            }
+                        } else {
+                            calendarService?.removeFutureEvents()
+                        }
+                    }
+                ))
+
+                Button("Disconnect", role: .destructive) {
+                    showCalendarDisconnectConfirm = true
                 }
             }
         }

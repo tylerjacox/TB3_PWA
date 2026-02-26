@@ -32,7 +32,7 @@ struct NextWorkoutProvider: TimelineProvider {
             let program = persisted.toSyncActiveProgram()
             guard let template = Templates.get(id: program.templateId) else { return nil }
 
-            // Program complete?
+            // Program complete or in deload?
             if program.currentWeek > template.durationWeeks { return nil }
 
             let profile = (try ctx.fetch(FetchDescriptor<PersistedProfile>()).first ?? PersistedProfile()).toSyncProfile()
@@ -50,6 +50,23 @@ struct NextWorkoutProvider: TimelineProvider {
             guard sessionIndex >= 0, sessionIndex < week.sessions.count else { return nil }
             let session = week.sessions[sessionIndex]
 
+            // Compute rest day status from session history
+            let sessionLogs = try ctx.fetch(FetchDescriptor<PersistedSessionLog>()).map { $0.toSyncSessionLog() }
+            let trainingStatus = TrainingDayCalculator.status(
+                program: program,
+                template: template,
+                sessionHistory: sessionLogs
+            )
+            let isRestDay: Bool
+            let restDaysRemaining: Int
+            if case .restDay(let resumeDate, _) = trainingStatus {
+                isRestDay = true
+                restDaysRemaining = TrainingDayCalculator.daysUntilNextWorkout(resumeDate: resumeDate)
+            } else {
+                isRestDay = false
+                restDaysRemaining = 0
+            }
+
             return WidgetWorkoutInfo(
                 templateName: template.name,
                 weekNumber: program.currentWeek,
@@ -62,7 +79,9 @@ struct NextWorkoutProvider: TimelineProvider {
                 },
                 repsPerSet: week.repsPerSet,
                 setsRange: week.setsRange,
-                unit: profile.unit
+                unit: profile.unit,
+                isRestDay: isRestDay,
+                restDaysRemaining: restDaysRemaining
             )
         } catch {
             return nil
@@ -90,6 +109,8 @@ struct WidgetWorkoutInfo: Sendable {
     let repsPerSet: RepsPerSet
     let setsRange: [Int]
     let unit: String
+    let isRestDay: Bool
+    let restDaysRemaining: Int  // 0 = workout day
 
     static let placeholder = WidgetWorkoutInfo(
         templateName: "Operator",
@@ -105,7 +126,9 @@ struct WidgetWorkoutInfo: Sendable {
         ],
         repsPerSet: .single(3),
         setsRange: [3, 4],
-        unit: "lb"
+        unit: "lb",
+        isRestDay: false,
+        restDaysRemaining: 0
     )
 }
 
@@ -123,30 +146,52 @@ struct NextWorkoutSmallView: View {
     var body: some View {
         if let info {
             VStack(alignment: .leading, spacing: 4) {
-                Text(info.templateName)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
+                HStack {
+                    Text(info.templateName)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    if info.isRestDay {
+                        Spacer()
+                        Image(systemName: "bed.double.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.tb3Muted)
+                    }
+                }
 
-                Text("Week \(info.weekNumber) \u{00B7} Day \(info.sessionNumber)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.tb3Muted)
+                if info.isRestDay {
+                    Text("Rest Day")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.tb3Muted)
+                } else {
+                    Text("Week \(info.weekNumber) \u{00B7} Day \(info.sessionNumber)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.tb3Muted)
+                }
 
                 Spacer(minLength: 2)
 
-                // Percentage badge
-                HStack(spacing: 4) {
-                    Text("\(info.percentage)%")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.tb3Accent)
+                if info.isRestDay {
+                    Text(info.restDaysRemaining <= 1
+                        ? "Back tomorrow"
+                        : "Back in \(info.restDaysRemaining) days")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.tb3Muted)
+                } else {
+                    // Percentage badge
+                    HStack(spacing: 4) {
+                        Text("\(info.percentage)%")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.tb3Accent)
 
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(repsLabel)
-                            .font(.system(size: 10))
-                            .foregroundStyle(Color.tb3Muted)
-                        Text(setsLabel)
-                            .font(.system(size: 10))
-                            .foregroundStyle(Color.tb3Muted)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(repsLabel)
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.tb3Muted)
+                            Text(setsLabel)
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.tb3Muted)
+                        }
                     }
                 }
 
@@ -204,38 +249,57 @@ struct NextWorkoutMediumView: View {
                         Text(info.templateName)
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(.white)
-                        Text("Week \(info.weekNumber) \u{00B7} Day \(info.sessionNumber)")
-                            .font(.system(size: 12))
+                        if info.isRestDay {
+                            HStack(spacing: 4) {
+                                Image(systemName: "bed.double.fill")
+                                    .font(.system(size: 10))
+                                Text("Rest Day")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
                             .foregroundStyle(Color.tb3Muted)
+                        } else {
+                            Text("Week \(info.weekNumber) \u{00B7} Day \(info.sessionNumber)")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.tb3Muted)
+                        }
                     }
                     Spacer()
-                    Text("\(info.percentage)%")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.tb3Accent)
+                    if info.isRestDay {
+                        Text(info.restDaysRemaining <= 1
+                            ? "Back tomorrow"
+                            : "Back in \(info.restDaysRemaining)d")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.tb3Muted)
+                    } else {
+                        Text("\(info.percentage)%")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.tb3Accent)
+                    }
                 }
 
                 Divider()
                     .background(Color.tb3Border)
 
-                // Exercise list
+                // Exercise list (dimmed on rest days)
                 ForEach(Array(info.exercises.prefix(4).enumerated()), id: \.offset) { _, exercise in
                     HStack {
                         Circle()
                             .fill(Color.liftColor(for: exercise.liftName))
                             .frame(width: 6, height: 6)
+                            .opacity(info.isRestDay ? 0.5 : 1)
                         Text(exercise.liftName)
                             .font(.system(size: 12))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(info.isRestDay ? Color.tb3Disabled : .white)
                             .lineLimit(1)
                         Spacer()
                         if exercise.isBodyweight {
                             Text("BW+\(formatWeight(exercise.targetWeight))")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.tb3Accent)
+                                .foregroundStyle(info.isRestDay ? Color.tb3Disabled : Color.tb3Accent)
                         } else {
                             Text("\(formatWeight(exercise.targetWeight)) \(info.unit)")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.tb3Accent)
+                                .foregroundStyle(info.isRestDay ? Color.tb3Disabled : Color.tb3Accent)
                         }
                     }
                 }

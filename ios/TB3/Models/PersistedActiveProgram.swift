@@ -11,6 +11,7 @@ final class PersistedActiveProgram {
     var currentSession: Int = 1
     var liftSelectionsData: Data = Data()
     var lastModified: String = ""
+    var deloadStartDate: String?
 
     init() {}
 
@@ -39,7 +40,8 @@ final class PersistedActiveProgram {
             currentWeek: currentWeek,
             currentSession: currentSession,
             liftSelections: liftSelections,
-            lastModified: lastModified
+            lastModified: lastModified,
+            deloadStartDate: deloadStartDate
         )
     }
 
@@ -50,6 +52,7 @@ final class PersistedActiveProgram {
         currentSession = sync.currentSession
         liftSelections = sync.liftSelections
         lastModified = sync.lastModified
+        deloadStartDate = sync.deloadStartDate
     }
 
     var templateIdEnum: TemplateId? {

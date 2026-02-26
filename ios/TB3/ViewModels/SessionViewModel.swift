@@ -36,8 +36,9 @@ final class SessionViewModel {
     private let spotifyService: SpotifyService?
     private let liveActivityService: LiveActivityService?
     private let notificationService: NotificationService?
+    private let calendarService: CalendarService?
 
-    init(appState: AppState, dataStore: DataStore, feedback: FeedbackService, castService: CastService? = nil, stravaService: StravaService? = nil, spotifyService: SpotifyService? = nil, liveActivityService: LiveActivityService? = nil, notificationService: NotificationService? = nil) {
+    init(appState: AppState, dataStore: DataStore, feedback: FeedbackService, castService: CastService? = nil, stravaService: StravaService? = nil, spotifyService: SpotifyService? = nil, liveActivityService: LiveActivityService? = nil, notificationService: NotificationService? = nil, calendarService: CalendarService? = nil) {
         self.appState = appState
         self.dataStore = dataStore
         self.feedback = feedback
@@ -46,6 +47,7 @@ final class SessionViewModel {
         self.spotifyService = spotifyService
         self.liveActivityService = liveActivityService
         self.notificationService = notificationService
+        self.calendarService = calendarService
     }
 
     private func sendCastUpdate() {
@@ -239,14 +241,6 @@ final class SessionViewModel {
         session.save()
         sendCastUpdate()
         sendLiveActivityUpdate()
-
-        // Check if all exercises complete
-        if session.sets.allSatisfy(\.completed) {
-            Task {
-                try? await Task.sleep(nanoseconds: 1_500_000_000)
-                completeSession()
-            }
-        }
     }
 
     // MARK: - Undo
@@ -375,6 +369,7 @@ final class SessionViewModel {
     // MARK: - Complete Session
 
     func completeSession() {
+        guard completionSummary == nil else { return }
         guard let session = appState.activeSession else { return }
 
         feedback.sessionComplete()
@@ -460,8 +455,14 @@ final class SessionViewModel {
                 dataStore.saveActiveProgram(persisted)
             }
 
-            // Milestone notifications
+            // Milestone notifications + deload
             if program.currentWeek > template.durationWeeks {
+                program.deloadStartDate = now
+                appState.activeProgram = program
+                if let persisted = dataStore.loadActiveProgram() {
+                    persisted.deloadStartDate = now
+                    dataStore.saveActiveProgram(persisted)
+                }
                 notificationService?.notifyProgramComplete(templateName: template.name)
             } else if program.currentWeek > oldWeek {
                 notificationService?.notifyWeekComplete(
@@ -471,28 +472,30 @@ final class SessionViewModel {
                 )
             }
 
-            // Reschedule workout reminders with updated next session
+            // Schedule training day notifications (rest day / workout day / deload)
             if appState.profile.workoutRemindersEnabled {
+                let trainingStatus = TrainingDayCalculator.status(
+                    program: program,
+                    template: template,
+                    sessionHistory: appState.sessionHistory
+                )
+                var exerciseNames: [String] = []
                 if program.currentWeek <= template.durationWeeks,
                    let schedule = appState.computedSchedule {
                     let weekIndex = program.currentWeek - 1
                     let sessionIndex = program.currentSession - 1
                     if weekIndex >= 0, weekIndex < schedule.weeks.count,
                        sessionIndex >= 0, sessionIndex < schedule.weeks[weekIndex].sessions.count {
-                        let nextSession = schedule.weeks[weekIndex].sessions[sessionIndex]
-                        let exerciseNames = nextSession.exercises.map {
+                        exerciseNames = schedule.weeks[weekIndex].sessions[sessionIndex].exercises.map {
                             LiftName(rawValue: $0.liftName)?.displayName ?? $0.liftName
                         }
-                        notificationService?.scheduleWorkoutReminders(
-                            templateName: template.name,
-                            weekNumber: program.currentWeek,
-                            sessionNumber: program.currentSession,
-                            exercises: exerciseNames
-                        )
                     }
-                } else {
-                    notificationService?.cancelWorkoutReminders()
                 }
+                notificationService?.scheduleTrainingNotifications(
+                    status: trainingStatus,
+                    templateName: template.name,
+                    exercises: exerciseNames
+                )
             }
         }
 
@@ -500,6 +503,22 @@ final class SessionViewModel {
         if appState.stravaState.isConnected && appState.stravaState.autoShare,
            let strava = stravaService {
             Task { await strava.shareActivity(session: log) }
+        }
+
+        // Log to calendar + reschedule future events
+        if appState.calendarState.isConnected, let cal = calendarService {
+            cal.logCompletedSession(log)
+            if appState.calendarState.scheduleFutureWorkouts,
+               let program = appState.activeProgram,
+               let template = Templates.get(id: program.templateId),
+               let schedule = appState.computedSchedule {
+                cal.scheduleFutureSessions(
+                    program: program,
+                    template: template,
+                    schedule: schedule,
+                    sessionHistory: appState.sessionHistory
+                )
+            }
         }
 
         // Stop Spotify polling

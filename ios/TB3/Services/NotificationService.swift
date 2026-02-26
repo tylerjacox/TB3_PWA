@@ -65,11 +65,102 @@ final class NotificationService {
             .removePendingNotificationRequests(withIdentifiers: [Self.restTimerIdentifier])
     }
 
-    // MARK: - Workout Reminders
+    // MARK: - Training Day Notifications (rest day / workout day / deload)
 
     private static let workoutReminderIdentifier = "tb3_workout_reminder_daily"
+    private static let restDayIdentifier = "tb3_rest_day"
+    private static let workoutDayIdentifier = "tb3_workout_day"
+    private static let deloadIdentifier = "tb3_deload"
 
-    /// Schedule a daily workout reminder at 8 AM with next session info.
+    /// Schedule date-aware notifications based on training status.
+    /// Called after each session completion and on app launch.
+    func scheduleTrainingNotifications(
+        status: TrainingDayStatus,
+        templateName: String,
+        exercises: [String]
+    ) {
+        guard isAuthorized else { return }
+
+        cancelTrainingNotifications()
+
+        switch status {
+        case .workoutDay:
+            scheduleWorkoutDayNotification(templateName: templateName, exercises: exercises, date: tomorrow8AM())
+
+        case .restDay(let resumeDate, _):
+            scheduleRestDayNotification(resumeDate: resumeDate)
+            scheduleWorkoutDayNotification(templateName: templateName, exercises: exercises, date: at8AM(resumeDate))
+
+        case .deloadWeek:
+            scheduleDeloadNotification()
+
+        case .programComplete, .noProgram:
+            break
+        }
+    }
+
+    private func scheduleRestDayNotification(resumeDate: Date) {
+        let content = UNMutableNotificationContent()
+        content.title = "Rest Day"
+        let daysLeft = TrainingDayCalculator.daysUntilNextWorkout(resumeDate: resumeDate)
+        if daysLeft <= 1 {
+            content.body = "Recover today — back to training tomorrow"
+        } else {
+            content.body = "Recover today — next session in \(daysLeft) days"
+        }
+        content.sound = .default
+
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: tomorrow8AM())
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: Self.restDayIdentifier,
+            content: content,
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func scheduleWorkoutDayNotification(templateName: String, exercises: [String], date: Date) {
+        let content = UNMutableNotificationContent()
+        content.title = "Time to Train!"
+        let exerciseList = exercises.prefix(3).joined(separator: ", ")
+        content.body = "\(templateName) — \(exerciseList)"
+        content.sound = .default
+
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: Self.workoutDayIdentifier,
+            content: content,
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func scheduleDeloadNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Deload Week"
+        content.body = "Focus on recovery and mobility. Retest your maxes when ready."
+        content.sound = .default
+
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: tomorrow8AM())
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: Self.deloadIdentifier,
+            content: content,
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    /// Cancel all training day notifications.
+    func cancelTrainingNotifications() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [Self.restDayIdentifier, Self.workoutDayIdentifier, Self.deloadIdentifier, Self.workoutReminderIdentifier]
+        )
+    }
+
+    /// Legacy method — kept for backward compatibility during toggle.
     func scheduleWorkoutReminders(
         templateName: String,
         weekNumber: Int,
@@ -77,8 +168,7 @@ final class NotificationService {
         exercises: [String]
     ) {
         guard isAuthorized else { return }
-
-        cancelWorkoutReminders()
+        cancelTrainingNotifications()
 
         let content = UNMutableNotificationContent()
         content.title = "\(templateName) — Week \(weekNumber)"
@@ -102,8 +192,19 @@ final class NotificationService {
 
     /// Cancel workout reminders.
     func cancelWorkoutReminders() {
-        UNUserNotificationCenter.current()
-            .removePendingNotificationRequests(withIdentifiers: [Self.workoutReminderIdentifier])
+        cancelTrainingNotifications()
+    }
+
+    // MARK: - Helpers
+
+    private func tomorrow8AM() -> Date {
+        let calendar = Calendar.current
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date())!
+        return calendar.date(bySettingHour: 8, minute: 0, second: 0, of: tomorrow)!
+    }
+
+    private func at8AM(_ date: Date) -> Date {
+        Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: date)!
     }
 
     // MARK: - Program Milestones

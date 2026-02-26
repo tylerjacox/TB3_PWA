@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8E4B01C2D3F5A6B7C8D9E0F1 /* CalendarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F3A92B5C6D8E1F0A4B7C3D9 /* CalendarState.swift */; };
+		B5C6D7E8F9A0B1C2D3E4F5A6 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D4E5F6B7C8D9E0F1A2B3C4 /* CalendarService.swift */; };
+		D9E0F1A2B3C4D5E6F7A8B9C0 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7D8E9F0A1B2C3D4E5F6A7B8 /* EventKit.framework */; };
 		011F4C311611CD38B7B7B6B8 /* OneRepMaxCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9FB1180EA46AF25BB041EB /* OneRepMaxCalculator.swift */; };
 		01D402570531196C5B6B3775 /* ProgramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DEFCD169638563FCA2DDEB2 /* ProgramView.swift */; };
 		05A2A8082EAD78FF020B8B48 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0854AD48C509A555DC85F527 /* AppConfig.swift */; };
@@ -51,6 +54,7 @@
 		59FCD4DBD2C8FFCC88BC6E11 /* FeedbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60EF9BFFCEF8F773A38BD1F /* FeedbackService.swift */; };
 		5AB65B221F765EB57FD8904F /* ScheduleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B9C4CB73E04A19A63F138D /* ScheduleGenerator.swift */; };
 		5EDB6C3C5966CAE2B8D43038 /* ActiveSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550C63978C3A83C7390E8E31 /* ActiveSessionState.swift */; };
+		8D4F2A6E1B7C3905D8E6F4A2 /* TrainingDayCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3A91D4B5C6F208E4A7D319 /* TrainingDayCalculator.swift */; };
 		5FF14C9B42E0ABAFD57F7C74 /* ExerciseDotIndicators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA43541F8C19E8783D2E084 /* ExerciseDotIndicators.swift */; };
 		6104E8AE16422066E52A28C1 /* LiftPRsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7024CDA719F11ECF1FDACB4E /* LiftPRsWidget.swift */; };
 		613DD0784894303659ABC9CB /* SharedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EEE31136B2DEDB243BA1ADF /* SharedContainer.swift */; };
@@ -88,6 +92,7 @@
 		A4EC70AF6F7BB749065ED64F /* TB3Widgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8E640750C3FCE3328E0F589E /* TB3Widgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A78A85B9F82BC8855BD1E8E8 /* NextWorkoutIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600CB938182C40C383B2F897 /* NextWorkoutIntent.swift */; };
 		A80EFDEC04E9852FD0BB0A02 /* ScheduleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B9C4CB73E04A19A63F138D /* ScheduleGenerator.swift */; };
+		3B7E5C9A0D2F841E6A1B3C5D /* TrainingDayCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3A91D4B5C6F208E4A7D319 /* TrainingDayCalculator.swift */; };
 		A8412DB3C63082BE5C5BD713 /* TB3LiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3B953E7AD420B27A2DC4E640 /* TB3LiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A869BD28A3F393AC9E94A792 /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F61BB598438A6D8D9515A006 /* SyncCoordinator.swift */; };
 		A8835FD07C8D6EF0C5B609A7 /* CalendarHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F95D79002111BD509523022 /* CalendarHistoryView.swift */; };
@@ -324,6 +329,10 @@
 		D7E8F9A0B1C2D3E4F5A6B7C8 /* SpotifyConsentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyConsentView.swift; sourceTree = "<group>"; };
 		E9F0A1B2C3D4E5F6A7B8C9D0 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
 		A2B3C4D5E6F7081929A3B4C5 /* TB3WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TB3WeatherService.swift; sourceTree = "<group>"; };
+		7E3A91D4B5C6F208E4A7D319 /* TrainingDayCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingDayCalculator.swift; sourceTree = "<group>"; };
+		7F3A92B5C6D8E1F0A4B7C3D9 /* CalendarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarState.swift; sourceTree = "<group>"; };
+		A3D4E5F6B7C8D9E0F1A2B3C4 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
+		C7D8E9F0A1B2C3D4E5F6A7B8 /* EventKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = EventKit.framework; path = System/Library/Frameworks/EventKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -340,6 +349,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4C94B941F47840FEEDB8F502 /* AWSCognitoIdentityProvider in Frameworks */,
+				D9E0F1A2B3C4D5E6F7A8B9C0 /* EventKit.framework in Frameworks */,
 				A02930F5755DC1A9AB1AD242 /* Pods_TB3.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -394,6 +404,7 @@
 		167E7C168D8E664F1909160F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C7D8E9F0A1B2C3D4E5F6A7B8 /* EventKit.framework */,
 				6D8540329979A130FB08E5E9 /* Pods_TB3.framework */,
 				60CAB50B7F84AA391A5F1590 /* Pods_TB3Tests.framework */,
 			);
@@ -530,6 +541,7 @@
 			children = (
 				CC43869E7BF890F0C474B7D5 /* AppState.swift */,
 				1EF7A9F0D64E852BA938CD16 /* AuthState.swift */,
+				7F3A92B5C6D8E1F0A4B7C3D9 /* CalendarState.swift */,
 				9FA57C0FB19E719D6EC74BF1 /* CastState.swift */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* SpotifyState.swift */,
 				2AA76355FAA60B652A234BEA /* StravaState.swift */,
@@ -629,6 +641,7 @@
 		C753231980C1E88265CD8DF7 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				A3D4E5F6B7C8D9E0F1A2B3C4 /* CalendarService.swift */,
 				231B17E5B68E62B59A5A6786 /* CastService.swift */,
 				4F00869A16B0671D41A2FE30 /* DataStore.swift */,
 				27DF0AB111D7D356E28E2AC2 /* ExportImportService.swift */,
@@ -644,6 +657,7 @@
 				D0EAE376B92E830AB0D77959 /* StravaTokenManager.swift */,
 				F61BB598438A6D8D9515A006 /* SyncCoordinator.swift */,
 				A2B3C4D5E6F7081929A3B4C5 /* TB3WeatherService.swift */,
+				7E3A91D4B5C6F208E4A7D319 /* TrainingDayCalculator.swift */,
 				32E3A17362FF21D895582B7D /* ValidationService.swift */,
 			);
 			path = Services;
@@ -982,6 +996,7 @@
 				9EF214C9E4F13137EF2584B7 /* ProgressWidget.swift in Sources */,
 				A80EFDEC04E9852FD0BB0A02 /* ScheduleGenerator.swift in Sources */,
 				DF74B2941D2129ACE1E0E4FE /* SharedContainer.swift in Sources */,
+				3B7E5C9A0D2F841E6A1B3C5D /* TrainingDayCalculator.swift in Sources */,
 				CA9270DB34E2526DBBE3FBE7 /* StrengthTrendWidget.swift in Sources */,
 				7C23FE79C18EE03798971E7C /* SyncPayloads.swift in Sources */,
 				69A47758DE834BAD1D783A68 /* TB3Widgets.swift in Sources */,
@@ -1037,6 +1052,8 @@
 				D3523EFE6608D5E8D5E6E4ED /* AuthViewModel.swift in Sources */,
 				B8991219C160AE73321CD5D6 /* ButtonStyle+TB3.swift in Sources */,
 				A8835FD07C8D6EF0C5B609A7 /* CalendarHistoryView.swift in Sources */,
+				B5C6D7E8F9A0B1C2D3E4F5A6 /* CalendarService.swift in Sources */,
+				8E4B01C2D3F5A6B7C8D9E0F1 /* CalendarState.swift in Sources */,
 				C6F35ACF92059BC700EA014A /* CastService.swift in Sources */,
 				A04A09D0E4D557A8112AF3CB /* CastState.swift in Sources */,
 				B707B89B5FE6AA858C0B6935 /* Color+TB3.swift in Sources */,
@@ -1083,6 +1100,7 @@
 				8FCA8AF7E02C522B34CDC7F2 /* ProfileViewModel.swift in Sources */,
 				01D402570531196C5B6B3775 /* ProgramView.swift in Sources */,
 				5AB65B221F765EB57FD8904F /* ScheduleGenerator.swift in Sources */,
+				8D4F2A6E1B7C3905D8E6F4A2 /* TrainingDayCalculator.swift in Sources */,
 				957CA72D50DAC1837DEDCF45 /* ScreenHeader.swift in Sources */,
 				D835AEDA6171C0745F666A04 /* SessionPreviewCard.swift in Sources */,
 				E5B3C1D4A8F927E6C3D10B85 /* SwipeGestureOverlay.swift in Sources */,

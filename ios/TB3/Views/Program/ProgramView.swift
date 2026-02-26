@@ -82,9 +82,26 @@ struct ProgramView: View {
                 VStack(spacing: 4) {
                     Text(template.name)
                         .font(.title2.bold())
-                    Text("Week \(program.currentWeek) of \(template.durationWeeks) \u{2022} \(template.sessionsPerWeek)/wk")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.tb3Muted)
+                    if program.currentWeek > template.durationWeeks {
+                        let status = TrainingDayCalculator.status(
+                            program: program,
+                            template: template,
+                            sessionHistory: appState.sessionHistory
+                        )
+                        if case .deloadWeek = status {
+                            Text("Deload Week \u{2022} \(template.sessionsPerWeek)/wk")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.tb3Muted)
+                        } else {
+                            Text("Completed \u{2022} \(template.durationWeeks) weeks")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.tb3Muted)
+                        }
+                    } else {
+                        Text("Week \(program.currentWeek) of \(template.durationWeeks) \u{2022} \(template.sessionsPerWeek)/wk")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.tb3Muted)
+                    }
                 }
 
                 // Weeks
@@ -99,8 +116,57 @@ struct ProgramView: View {
                         }
                     )
                 }
+
+                // Deload week row (shown after all template weeks)
+                if program.currentWeek > template.durationWeeks {
+                    deloadRow(program: program, template: template)
+                }
             }
         }
+    }
+
+    // MARK: - Deload Row
+
+    private func deloadRow(program: SyncActiveProgram, template: TemplateDef) -> some View {
+        let status = TrainingDayCalculator.status(
+            program: program,
+            template: template,
+            sessionHistory: appState.sessionHistory
+        )
+        return HStack {
+            Image(systemName: "figure.mind.and.body")
+                .font(.caption)
+                .foregroundStyle(Color.tb3Accent)
+
+            Text("Deload")
+                .font(.headline)
+
+            if case .deloadWeek(let endsDate) = status {
+                let daysLeft = TrainingDayCalculator.daysRemainingInDeload(endsDate: endsDate)
+                Text(daysLeft <= 1 ? "Ends tomorrow" : "\(daysLeft) days left")
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.tb3Accent.opacity(0.2))
+                    .foregroundColor(.tb3Accent)
+                    .cornerRadius(4)
+            } else {
+                Text("Completed")
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.tb3Success.opacity(0.2))
+                    .foregroundColor(.tb3Success)
+                    .cornerRadius(4)
+            }
+
+            Spacer()
+
+            Text("Recovery")
+                .font(.caption)
+                .foregroundStyle(Color.tb3Muted)
+        }
+        .padding(.vertical, 12)
     }
 
     // MARK: - Template Browser
