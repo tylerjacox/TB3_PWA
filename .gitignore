@@ -30,3 +30,5 @@ ios/TB3.xcodeproj/xcuserdata/
 ios/TB3.xcworkspace/xcuserdata/
 ios/DerivedData/
 ios/build/
+ios/.swiftpm/
+ios/Package.resolved

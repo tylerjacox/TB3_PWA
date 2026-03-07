@@ -103,6 +103,21 @@ struct SessionView: View {
                             onToggleLike: { vm.toggleLike() }
                         )
                         .padding(.bottom, 8)
+                    } else if appState.spotifyState.needsReauth {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.circle")
+                                .foregroundStyle(Color.tb3Accent)
+                            Text("Spotify session expired")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.tb3Muted)
+                            Spacer()
+                            Text("Reconnect in Settings")
+                                .font(.caption)
+                                .foregroundStyle(Color.tb3Accent)
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .padding(.bottom, 8)
                     }
 
                     // Exercise pager dots

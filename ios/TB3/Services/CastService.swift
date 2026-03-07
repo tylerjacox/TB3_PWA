@@ -56,6 +56,8 @@ final class CastService {
         castSession = nil
         castState.connected = false
         castState.deviceName = nil
+        debounceTimer?.invalidate()
+        debounceTimer = nil
         syncTimer?.invalidate()
         syncTimer = nil
     }
